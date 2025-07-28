@@ -650,10 +650,9 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import stripe
-
+import os
 # Set Stripe secret key
-stripe.api_key = "sk_test_51Rp2bKLhHv3emNgTJAEAAH9iXQsChpvJtx4J19onV4PW1T7s9784sWaDlQCUAnRqaGsjnpJgQG5yk8tCqVN65oDW00hOC7wGVO"
-
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 @csrf_exempt
 def initiate_khalti_payment(request):
     if request.method == 'POST':
