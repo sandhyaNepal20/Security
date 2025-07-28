@@ -1,0 +1,151 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background: #fff;
+    color: #000;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 60px;
+    border-bottom: 1px solid #eee;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 18px;
+}
+
+.logo img {
+    width: 30px;
+    margin-right: 8px;
+}
+
+nav a {
+    margin: 0 10px;
+    text-decoration: none;
+    color: #000;
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* margin-top: 40px; */
+    margin-top: 0;
+    /* remove any margin pushing down */
+    position: relative;
+    top: -20px;
+
+}
+
+.form-box {
+    width: 320px;
+    text-align: center;
+}
+
+.form-logo img {
+    width: 200px;
+    /* or any size you want */
+    height: auto;
+    /* maintain aspect ratio */
+}
+
+
+.form-logo h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 20px;
+}
+
+.form-subtitle {
+    font-size: 12px;
+    color: #333;
+    margin: 16px 0;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+form input {
+    margin: 8px 0;
+    padding: 10px;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 13px;
+    background: transparent;
+}
+
+form input:focus {
+    outline: none;
+    border-bottom: 1px solid #ccc;
+    /* keep same border or customize */
+}
+
+
+form button {
+    background-color: #e6a36d;
+    color: #000;
+    padding: 10px;
+    border: none;
+    margin-top: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+form button:hover {
+    background-color: #d88c4e;
+}
+
+.login-link {
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.login-link a {
+    color: #000;
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.form-actions button {
+    background-color: #efb27c;
+    border: none;
+    padding: 10px 25px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.forgot-password {
+    font-size: 14px;
+    color: #555;
+    text-decoration: none;
+    margin-top: 21px;
+
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
