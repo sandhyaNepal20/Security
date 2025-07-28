@@ -1,0 +1,174 @@
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* margin-top: 40px; */
+    margin-top: 0;
+    /* remove any margin pushing down */
+    position: relative;
+    top: -20px;
+
+}
+
+.form-box {
+    width: 320px;
+    text-align: center;
+}
+
+.form-logo img {
+    width: 200px;
+    /* or any size you want */
+    height: auto;
+    /* maintain aspect ratio */
+}
+
+
+.form-logo h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 20px;
+}
+
+.form-subtitle {
+    font-size: 12px;
+    color: #333;
+    margin: 16px 0;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+form input {
+    margin: 8px 0;
+    padding: 10px;
+    border: none;
+    border-bottom: 1px solid #ccc;
+    font-size: 13px;
+    background: transparent;
+}
+
+form input:focus {
+    outline: none;
+    border-bottom: 1px solid #ccc;
+    /* keep same border or customize */
+}
+
+
+form button {
+    background-color: #e6a36d;
+    color: #000;
+    padding: 10px;
+    border: none;
+    margin-top: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+form button:hover {
+    background-color: #d88c4e;
+}
+
+.login-link {
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.login-link a {
+    color: #000;
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.form-actions button {
+    background-color: #efb27c;
+    border: none;
+    padding: 10px 25px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.forgot-password {
+    font-size: 14px;
+    color: #555;
+    text-decoration: none;
+    margin-top: 21px;
+
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+/* Enhanced Password Requirements */
+.password-requirements {
+    margin-top: 15px;
+    padding: 20px;
+    background: #f5f5f5;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    text-align: left;
+}
+
+.password-requirements h6 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: #333;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.password-requirements h6::before {
+    content: '🔒';
+    font-size: 16px;
+}
+
+.password-requirements ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 8px;
+}
+
+.password-requirements li {
+    font-size: 12px;
+    color: #666;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 8px;
+    position: relative;
+    transition: all 0.3s ease;
+    border-left: 3px solid #ddd;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.password-requirements li::before {
+    content: "○";
+    margin-right: 8px;
+    color: #ccc;
+    font-weight: bold;
+}
+
+.password-requirements li.met {
+    color: #2d5016;
+    background: rgba(40, 167, 69, 0.1);
+    border-left-color: #28a745;
+}
+
+.password-requirements li.met::before {
+    content: "✓";
+    color: #28a745;
+}
