@@ -1,0 +1,138 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Edit Profile | FurniFlex</title>
+    <link rel="stylesheet" href="{% static 'css/editprofile.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <style>
+        .message-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            color: #1e1e1e;
+            z-index: 1000;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.4s ease;
+            min-width: 300px;
+        }
+
+        .message-popup.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .message-popup .icon {
+            margin-right: 12px;
+            color: green;
+            font-size: 20px;
+        }
+
+        .message-popup .popup-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            margin-left: 10px;
+            color: #aaa;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <section class="edit-profile-page">
+        <h2>Edit Your Profile</h2>
+
+        <!-- 🔒 Hidden message container -->
+        <div class="django-messages" style="display: none;">
+            {% if messages %}
+            {% for message in messages %}
+            <p data-message="{{ message }}" data-tag="{{ message.tags }}"></p>
+            {% endfor %}
+            {% endif %}
+        </div>
+
+        <form class="edit-form" method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="fullname">Full Name</label>
+                <input type="text" id="fullname" name="fullname" value="{{ name }}" required />
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <p class="email-display">{{ email }}</p>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="text" id="phone" name="phone" value="{{ phone }}" required pattern="[0-9]{10,15}" />
+            </div>
+            <div class="form-group">
+                <label>Password Changes (optional)</label>
+                <input type="password" name="current_password" placeholder="Current Password" />
+                <input type="password" name="new_password" placeholder="New Password" />
+                <input type="password" name="confirm_password" placeholder="Confirm New Password" />
+            </div>
+            <button type="submit" class="save-button">Save Changes</button>
+        </form>
+    </section>
+
+    {% include 'footer.html' %}
+
+    <!-- ✅ Popup JavaScript -->
+    <script>
+        function showPopupMessage(message, type, callback = null) {
+            const existing = document.querySelector('.message-popup');
+            if (existing) existing.remove();
+
+            const popup = document.createElement('div');
+            popup.className = `message-popup ${type}`;
+            popup.innerHTML = `
+                <div class="icon">✔️</div>
+                <div class="message-text">${message}</div>
+                <button class="popup-close" onclick="closePopup(this)">&times;</button>
+            `;
+            document.body.appendChild(popup);
+            setTimeout(() => popup.classList.add('show'), 100);
+
+            setTimeout(() => {
+                closePopup(popup.querySelector('.popup-close'));
+                if (callback) callback();
+            }, 3000);
+        }
+
+        function closePopup(btn) {
+            const popup = btn.parentElement;
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+
+        // Read Django messages
+        document.addEventListener('DOMContentLoaded', function () {
+            const messages = document.querySelectorAll('.django-messages p');
+            messages.forEach(msg => {
+                const text = msg.dataset.message;
+                const tag = msg.dataset.tag || 'success';
+                showPopupMessage(text, tag, () => {
+                    if (tag === 'success' && text.includes("Password updated")) {
+                        window.location.href = "{% url 'account' %}";
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

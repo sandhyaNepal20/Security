@@ -1,0 +1,500 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ product.name }} - Customize | FurniFlex</title>
+
+    <link rel="stylesheet" href="{% static 'css/customize.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/home.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+
+    <style>
+        .color-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .color-choice {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .color-choice.selected {
+            border: 2px solid #000;
+        }
+
+        .thumbnail-img.active {
+            border: 2px solid #000;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <section class="product-detail">
+        <div class="container" style="display: flex; gap: 30px;">
+
+            <!-- 🖼️ Left Image Area -->
+            <div class="left" style="flex: 1;">
+                <div class="main-image-container">
+                    <button class="main-nav-arrow main-arrow-left" id="mainPrevArrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                    </button>
+
+                    <div class="main-image">
+                        <img id="mainProductImage" class="mainProductImage" src="{{ product.image.url }}"
+                            alt="{{ product.name }}" />
+                        {% if thumbnails %}
+                        <div class="image-counter" id="imageCounter">
+                            <span id="currentImageIndex">1</span> / <span id="totalImages">{{ thumbnails|length|add:"1"
+                                }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <button class="main-nav-arrow main-arrow-right" id="mainNextArrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
+
+                {% if thumbnails %}
+                <div class="thumbnails-container">
+                    <button class="nav-arrow arrow-left" id="prevArrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                    </button>
+                    <div class="thumbnails-wrapper">
+                        <div class="thumbnails" id="thumbnailsContainer">
+                            <img src="{{ product.image.url }}" class="thumbnail-img active"
+                                data-src="{{ product.image.url }}" />
+                            {% for image_url in thumbnails %}
+                            <img src="{{ image_url }}" class="thumbnail-img" data-src="{{ image_url }}" />
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <button class="nav-arrow arrow-right" id="nextArrow">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 18l6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
+                {% endif %}
+
+                <p class="desc">{{ product.description }}</p>
+            </div>
+
+            <!-- ℹ️ Product Info Area -->
+            <div class="right" style="flex: 1;">
+                <h1>{{ product.name }}</h1>
+
+                <div class="stars">
+                    {% for i in "12345" %}
+                    {% if product.rating|default:0 >= i|add:"0" %}
+                    <span>★</span>
+                    {% else %}
+                    <span>☆</span>
+                    {% endif %}
+                    {% endfor %}
+                    <span class="reviews">({{ product.reviews|default:"0" }} Ratings)</span>
+                </div>
+
+                <div class="price">Rs {{ product.price }}</div>
+
+                <form method="POST" class="color-preference-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    <input type="hidden" name="preferred_color" id="preferred-color-value">
+
+                    <label class="block font-semibold mb-2">Color</label>
+                    <div class="color-options" id="color-options">
+
+                        <span class="color-choice" data-color="Black" data-index="0"
+                            style="background-color: black;"></span>
+                        <span class="color-choice" data-color="green" data-index="1"
+                            style="background-color:green; border: 1px solid #ccc;"></span>
+                        <!-- <span class="color-choice" data-color="Yellow" data-index="2"
+                            style="background-color: grey; border: 1px solid #ccc;"></span> -->
+                        <!-- <span class="color-choice" data-color="Red" data-index="3"
+                            style="background-color: red;"></span>
+                        <span class="color-choice" data-color="Brown" data-index="4"
+                            style="background-color: brown;"></span> -->
+                    </div>
+                </form>
+
+                {% if color_options %}
+                <div class="color-group">
+                    <label>Available Colors</label>
+                    <div class="colors">
+                        {% for option in color_options %}
+                        <span class="color {{ option.name|lower }}" data-img-url="{{ option.image_url }}"
+                            title="{{ option.name }}" style="cursor:pointer;"></span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="quantity-group">
+                    <label for="product-qty">Quantity</label>
+                    <select name="quantity" id="product-qty">
+                        {% for i in "12345" %}
+                        <option>{{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="button-row" style="margin-top: 20px;">
+                    <form id="wishlistForm" method="POST" action="{% url 'add_to_save' %}" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <button type="submit" class="wishlist" aria-label="Add to wishlist">♡</button>
+                    </form>
+                    <button class="add-cart" data-id="{{ product.id }}" data-name="{{ product.name }}"
+                        data-price="{{ product.price }}" data-img="{{ product.image.url }}">
+                        Add To Cart
+                    </button>
+                    <a id="buy-now-btn" href="#" class="buy-now">Buy Now</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <!-- 🧩 Related Products -->
+    <section id="related-products" class="products-section">
+        <div class="products-header">
+            <h2>Related Products</h2>
+        </div>
+        <div class="product-grid">
+            {% for related in related_products %}
+            <div class="product-card" onclick="window.location.href='/customize/{{ related.id }}/'" role="button"
+                tabindex="0">
+                <img src="{{ related.image.url }}" alt="{{ related.name }}" />
+                <h4>{{ related.name }}</h4>
+                <p class="price">Rs.{{ related.price }}</p>
+                <div class="rating">
+                    {% for i in "12345" %}
+                    {% if related.rating|default:0 >= i|add:"0" %}
+                    <span class="star full">★</span>
+                    {% else %}
+                    <span class="star">☆</span>
+                    {% endif %}
+                    {% endfor %}
+                    <span class="review-count">({{ related.reviews|default:"0" }} Reviews)</span>
+                </div>
+            </div>
+            {% empty %}
+            <p>No related products available.</p>
+            {% endfor %}
+        </div>
+    </section>
+    {% include 'footer.html' %}
+
+    <!-- 🛒 Add to Cart Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // 🔁 Thumbnail click: update main image
+            const thumbnails = document.querySelectorAll('.thumbnail-img');
+            const mainImage = document.getElementById('mainProductImage');
+
+            thumbnails.forEach(thumb => {
+                thumb.addEventListener('click', () => {
+                    const newSrc = thumb.getAttribute('data-src');
+                    mainImage.src = newSrc;
+                });
+            });
+
+            // 🎨 Color click changes image to matching thumbnail
+            // 🎨 Color click changes image to matching thumbnail and scrolls to it
+            const colorChoices = document.querySelectorAll('.color-choice');
+            const colorInput = document.getElementById('preferred-color-value');
+
+            colorChoices.forEach(choice => {
+                choice.addEventListener('click', () => {
+                    const selectedColor = choice.getAttribute('data-color');
+                    const index = parseInt(choice.getAttribute('data-index'));
+                    colorInput.value = selectedColor;
+
+                    // Style update
+                    document.querySelectorAll('.color-choice').forEach(c => c.classList.remove('selected'));
+                    choice.classList.add('selected');
+
+                    // Change image
+                    const correspondingThumbnail = thumbnails[index];
+                    if (correspondingThumbnail) {
+                        const newImageSrc = correspondingThumbnail.getAttribute('data-src');
+                        mainImage.src = newImageSrc;
+
+                        // Mark as active
+                        thumbnails.forEach(t => t.classList.remove('active'));
+                        correspondingThumbnail.classList.add('active');
+
+                        // Scroll to make thumbnail visible
+                        const scrollPosition = index * thumbnailWidth;
+                        thumbnailsContainer.style.transform = `translateX(-${scrollPosition}px)`;
+
+                        // Update current index and image counter
+                        currentImageIdx = index;
+                        updateImageCounter();
+                        updateMainArrowStates();
+                        updateThumbnailArrowStates();
+                    }
+                });
+            });
+
+        });
+    </script>
+
+    <!-- 🛒 Add to Cart & Carousel Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Add to Cart and Buy Now Buttons
+            const addCartBtn = document.querySelector('.add-cart');
+            const buyNowBtn = document.getElementById('buy-now-btn');
+
+            if (addCartBtn) {
+                addCartBtn.addEventListener('click', () => {
+                    const id = addCartBtn.dataset.id;
+                    const name = addCartBtn.dataset.name;
+                    const price = parseFloat(addCartBtn.dataset.price);
+                    const image = addCartBtn.dataset.img;
+                    const quantity = parseInt(document.getElementById('product-qty').value);
+
+                    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+                    const existingItem = cart.find(item => item.id === id);
+                    if (existingItem) {
+                        existingItem.quantity += quantity;
+                    } else {
+                        cart.push({ id, name, price, image, quantity });
+                    }
+
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    showPopupMessage("Cart added successfully!", "success");
+                });
+            }
+
+            if (buyNowBtn) {
+                buyNowBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+
+                    const productId = addCartBtn.dataset.id;
+                    const quantity = document.getElementById('product-qty').value;
+
+                    // Get selected color (assuming you have clickable color elements with 'color' class)
+                    const selectedColorEl = document.querySelector('.color.selected');
+                    const selectedColor = selectedColorEl ? selectedColorEl.classList[1] : ''; // Assumes second class is color name
+
+                    // Redirect with all params
+                    window.location.href = `{% url 'placeorder' %}?product_id=${productId}&quantity=${quantity}&color=${encodeURIComponent(selectedColor)}`;
+                });
+            }
+
+
+            // Thumbnail carousel logic
+            const thumbnails = document.querySelectorAll('.thumbnail-img');
+            const mainImage = document.getElementById('mainProductImage');
+            const thumbnailsContainer = document.getElementById('thumbnailsContainer');
+            const prevArrow = document.getElementById('prevArrow');
+            const nextArrow = document.getElementById('nextArrow');
+            const mainPrevArrow = document.getElementById('mainPrevArrow');
+            const mainNextArrow = document.getElementById('mainNextArrow');
+            const currentImageIndex = document.getElementById('currentImageIndex');
+            const totalImages = document.getElementById('totalImages');
+
+            let currentImageIdx = 0;
+            const thumbnailWidth = 90; // 80px + 10px gap
+            const visibleThumbnails = Math.floor(thumbnailsContainer?.parentElement?.offsetWidth / thumbnailWidth) || 4;
+
+            // Initialize transform style
+            if (thumbnailsContainer && !thumbnailsContainer.style.transform) {
+                thumbnailsContainer.style.transform = 'translateX(0px)';
+            }
+
+            // Gather image URLs from thumbnails
+            const imageUrls = Array.from(thumbnails).map(thumb => thumb.getAttribute('data-src'));
+
+            // Set first thumbnail as active and update counter
+            if (thumbnails.length > 0) {
+                thumbnails[0].classList.add('active');
+                updateImageCounter();
+            }
+
+            // Update image counter display
+            function updateImageCounter() {
+                if (currentImageIndex && totalImages) {
+                    currentImageIndex.textContent = currentImageIdx + 1;
+                    totalImages.textContent = imageUrls.length;
+                }
+            }
+
+            // Update main image and sync active thumbnail
+            function updateMainImage(index) {
+                if (index < 0 || index >= imageUrls.length) return;
+
+                currentImageIdx = index;
+                mainImage.src = imageUrls[index];
+
+                thumbnails.forEach(t => t.classList.remove('active'));
+                if (thumbnails[index]) thumbnails[index].classList.add('active');
+
+                updateImageCounter();
+                updateMainArrowStates();
+            }
+
+            // Enable/disable main image navigation arrows
+            function updateMainArrowStates() {
+                if (mainPrevArrow && mainNextArrow) {
+                    mainPrevArrow.disabled = currentImageIdx <= 0;
+                    mainNextArrow.disabled = currentImageIdx >= imageUrls.length - 1;
+                }
+            }
+
+            // Thumbnail click to change main image
+            thumbnails.forEach((thumb, index) => {
+                thumb.addEventListener('click', () => {
+                    updateMainImage(index);
+                });
+            });
+
+            // Main image navigation arrows
+            if (mainPrevArrow) {
+                mainPrevArrow.addEventListener('click', () => {
+                    if (currentImageIdx > 0) updateMainImage(currentImageIdx - 1);
+                });
+            }
+
+            if (mainNextArrow) {
+                mainNextArrow.addEventListener('click', () => {
+                    if (currentImageIdx < imageUrls.length - 1) updateMainImage(currentImageIdx + 1);
+                });
+            }
+
+            // Keyboard navigation support
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft' && currentImageIdx > 0) {
+                    updateMainImage(currentImageIdx - 1);
+                } else if (e.key === 'ArrowRight' && currentImageIdx < imageUrls.length - 1) {
+                    updateMainImage(currentImageIdx + 1);
+                }
+            });
+
+            // Thumbnails scrolling nav arrows
+            function updateThumbnailArrowStates() {
+                if (!thumbnailsContainer || !prevArrow || !nextArrow) return;
+
+                const maxScroll = Math.max(0, thumbnails.length - visibleThumbnails);
+                const currentTransformX = thumbnailsContainer.style.transform;
+                const currentScroll = Math.abs(parseInt(currentTransformX.replace('translateX(', '').replace('px)', '') || '0')) / thumbnailWidth;
+
+                prevArrow.disabled = currentScroll <= 0;
+                nextArrow.disabled = currentScroll >= maxScroll;
+            }
+
+            function scrollThumbnails(direction) {
+                if (!thumbnailsContainer) return;
+
+                const style = thumbnailsContainer.style.transform;
+                const currentTransform = style ? parseInt(style.replace('translateX(', '').replace('px)', '')) : 0;
+
+                const maxScroll = Math.max(0, (thumbnails.length - visibleThumbnails) * thumbnailWidth);
+
+                let newTransform;
+                if (direction === 'prev') {
+                    newTransform = Math.min(0, currentTransform + thumbnailWidth);
+                } else {
+                    newTransform = Math.max(-maxScroll, currentTransform - thumbnailWidth);
+                }
+
+                thumbnailsContainer.style.transform = `translateX(${newTransform}px)`;
+                updateThumbnailArrowStates();
+            }
+
+            if (prevArrow) prevArrow.addEventListener('click', () => scrollThumbnails('prev'));
+            if (nextArrow) nextArrow.addEventListener('click', () => scrollThumbnails('next'));
+
+            // Initialize arrow states
+            updateMainArrowStates();
+            updateThumbnailArrowStates();
+
+            // On window resize recalc thumbnails arrows
+            window.addEventListener('resize', updateThumbnailArrowStates);
+        });
+        function showPopupMessage(message, type, callback = null) {
+            const existingPopup = document.querySelector('.message-popup');
+            if (existingPopup) existingPopup.remove();
+
+            const popup = document.createElement('div');
+            popup.className = `message-popup ${type}`;
+            popup.innerHTML = `
+        <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 6L9 17l-5-5" />
+            </svg>
+        </div>
+        <div class="message-text">${message}</div>
+        <button class="popup-close" onclick="closePopup(this)">&times;</button>
+    `;
+
+            document.body.appendChild(popup);
+            setTimeout(() => popup.classList.add('show'), 100);
+
+            setTimeout(() => {
+                closePopup(popup.querySelector('.popup-close'));
+                if (callback) callback();
+            }, 3000);
+        }
+
+        function closePopup(closeBtn) {
+            const popup = closeBtn.parentElement;
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+
+        const wishlistForm = document.getElementById('wishlistForm');
+
+        if (wishlistForm) {
+            wishlistForm.addEventListener('submit', function (e) {
+                e.preventDefault(); // Prevent page reload
+
+                const formData = new FormData(wishlistForm);
+                fetch(wishlistForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+                    },
+                    body: formData,
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            showPopupMessage("Product saved successfully!", "success");
+                        } else {
+                            showPopupMessage("Failed to save product.", "error");
+                        }
+                    })
+                    .catch(() => {
+                        showPopupMessage("Something went wrong.", "error");
+                    });
+            });
+        }
+
+
+    </script>
+</body>
+
+</html>

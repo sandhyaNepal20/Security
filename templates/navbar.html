@@ -1,0 +1,129 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FurniFlex</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <!-- <script defer src="static/script.js"></script> -->
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <a href="{% url 'home' %}">
+                <img src="{% static 'images/logofurni.png' %}" alt="FurniFlex Logo" />
+            </a>
+        </div>
+
+        <div class="hamburger" id="hamburger">&#9776;</div>
+
+        <nav id="nav-menu" class="nav-menu">
+            <a href="{% url 'home' %}" class="nav-link active">Home</a>
+            <a href="#products" class="nav-link">Products</a>
+            <a href="{% url 'home' %}#about" class="nav-link">About Us</a>
+            <a href="{% url 'home' %}#contact" class="nav-link">Contact Us</a>
+
+            {% if request.user.is_authenticated %}
+            <div class="dropdown mobile-only">
+                <button id="mobileAccountDropdownBtn" class="login-btn dropbtn">My Account ▾</button>
+                <div id="mobileAccountDropdownMenu" class="dropdown-content">
+                    <a href="{% url 'account' %}">Profile</a>
+                    <a href="{% url 'logout' %}">Logout <span class="logout-icon">↪️</span></a>
+                </div>
+                {% else %}
+                <a href="{% url 'login' %}" class="mobile-only">Login / Sign Up</a>
+                {% endif %}
+
+                <a href="{% url 'wishlist' %}" class="icon-link mobile-only">
+                    <img src="{% static 'images/wishlist.png' %}" alt="Wishlist" class="nav-icon-img" />
+                </a>
+                <a href="{% url 'cart' %}" class="icon-link mobile-only">
+                    <img src="{% static 'images/cart.png' %}" alt="Cart" class="nav-icon-img" />
+                </a>
+        </nav>
+
+
+        <div class="auth-cart desktop-only">
+            {% if request.user.is_authenticated %}
+            <div class="dropdown">
+                <button id="accountDropdownBtn" class="login-btn dropbtn">My Account</button>
+                <div id="accountDropdownMenu" class="dropdown-content">
+                    <a href="{% url 'account' %}">Profile</a>
+                    <a href="{% url 'logout' %}">Logout <span class="logout-icon">↪️</span></a>
+                </div>
+            </div>
+            {% else %}
+            <a href="{% url 'login' %}" class="login-btn">Login / Sign Up</a>
+            {% endif %}
+            <a href="{% url 'save' %}" class="icon-link">
+                <img src="{% static 'images/wishlist.png' %}" alt="Wishlist" class="nav-icon-img" />
+            </a>
+            <a href="{% url 'cart' %}" class="icon-link">
+                <img src="{% static 'images/cart.png' %}" alt="Cart" class="nav-icon-img" />
+            </a>
+        </div>
+    </header>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Hamburger menu toggle
+            const hamburger = document.getElementById('hamburger');
+            const navMenu = document.getElementById('nav-menu');
+
+            hamburger.addEventListener('click', function () {
+                navMenu.classList.toggle('show');
+            });
+
+            // Desktop dropdown toggle (existing)
+            const dropdownBtn = document.getElementById('accountDropdownBtn');
+            const dropdownMenu = document.getElementById('accountDropdownMenu');
+
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!dropdownMenu.contains(e.target) && !dropdownBtn.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+
+            // Mobile dropdown toggle inside hamburger
+            const mobileDropdownBtn = document.getElementById('mobileAccountDropdownBtn');
+            const mobileDropdownMenu = document.getElementById('mobileAccountDropdownMenu');
+
+            if (mobileDropdownBtn && mobileDropdownMenu) {
+                mobileDropdownBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    mobileDropdownMenu.classList.toggle('show');
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!mobileDropdownMenu.contains(e.target) && !mobileDropdownBtn.contains(e.target)) {
+                        mobileDropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+
+
+    </script>
+
+</body>
+
+</div>
+
+
+
+</html>

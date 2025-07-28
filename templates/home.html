@@ -1,0 +1,340 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FurniFlex</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <!-- <script defer src="static/script.js"></script> -->
+</head>
+
+
+<body class="light">
+
+    <!-- Header -->
+    <header>
+        <div class="logo">
+            <a href="{% url 'home' %}">
+                <img src="{% static 'images/logofurni.png' %}" alt="FurniFlex Logo" />
+            </a>
+        </div>
+
+        <div class="hamburger" id="hamburger">&#9776;</div>
+
+        <nav id="nav-menu" class="nav-menu">
+            <a href="{% url 'home' %}" class="nav-link active">Home</a>
+            <a href="#products" class="nav-link">Products</a>
+            <a href="#about" class="nav-link">About Us</a>
+            <a href="#contact" class="nav-link">Contact Us</a>
+
+            {% if request.user.is_authenticated %}
+            <div class="dropdown mobile-only">
+                <button id="mobileAccountDropdownBtn" class="login-btn dropbtn">My Account ▾</button>
+                <div id="mobileAccountDropdownMenu" class="dropdown-content">
+                    <a href="{% url 'account' %}">Profile</a>
+                    <a href="{% url 'logout' %}">Logout <span class="logout-icon">↪️</span></a>
+                </div>
+                {% else %}
+                <a href="{% url 'login' %}" class="mobile-only">Login / Sign Up</a>
+                {% endif %}
+
+                <a href="{% url 'wishlist' %}" class="icon-link mobile-only">
+                    <img src="{% static 'images/wishlist.png' %}" alt="Wishlist" class="nav-icon-img" />
+                </a>
+                <a href="{% url 'cart' %}" class="icon-link mobile-only">
+                    <img src="{% static 'images/cart.png' %}" alt="Cart" class="nav-icon-img" />
+                </a>
+
+
+
+        </nav>
+
+
+        <div class="auth-cart desktop-only">
+            {% if request.user.is_authenticated %}
+            <div class="dropdown">
+                <button id="accountDropdownBtn" class="login-btn dropbtn">My Account</button>
+                <div id="accountDropdownMenu" class="dropdown-content">
+                    <a href="{% url 'account' %}">Profile</a>
+                    <a href="{% url 'logout' %}">Logout <span class="logout-icon">↪️</span></a>
+                </div>
+            </div>
+            {% else %}
+            <a href="{% url 'login' %}" class="login-btn">Login / Sign Up</a>
+            {% endif %}
+            <a href="{% url 'save' %}" class="icon-link">
+                <img src="{% static 'images/wishlist.png' %}" alt="Wishlist" class="nav-icon-img" />
+            </a>
+            <a href="{% url 'cart' %}" class="icon-link">
+                <img src="{% static 'images/cart.png' %}" alt="Cart" class="nav-icon-img" />
+            </a>
+            <!-- Dark Mode Switch -->
+            <div class="dark-toggle-wrapper">
+                <input type="checkbox" id="darkToggle" class="dark-toggle-checkbox" />
+                <label for="darkToggle" class="dark-toggle-label">
+                    <span class="toggle-thumb"></span>
+                </label>
+            </div>
+        </div>
+    </header>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="slide left">
+            <img src="static/images/cover.jpeg" alt="Living Room" />
+            <div class="hero-text top-left">
+                <span class="word">Make</span>
+                <span class="word">Your</span>
+                <span class="word">Home</span>
+                <span class="word">Feel</span>
+                <span class="word">Like</span>
+                <span class="word">You</span>
+            </div>
+        </div>
+        <div class="slide right">
+            <img src="static/images/cover.jpeg" alt="Living Room" />
+            <a href="{% url 'searchproduct' %}">
+                <button class="shop-btn">Shop Now →</button>
+            </a>
+        </div>
+    </section>
+
+    <!-- Divider Line -->
+    <!-- <hr class="section-divider" /> -->
+
+    <!-- Products Section -->
+    <section id="products" class="products-section">
+        <div class="products-header">
+            <h2>Products</h2>
+            <a href="{% url 'searchproduct' %}">
+                <button class="view-all-btn">View All</button>
+            </a>
+        </div>
+
+        <div class="product-grid">
+            {% for product in products %}
+            <div class="product-card" onclick="window.location.href='/customize/{{ product.id }}/'">
+                <!-- Product Image -->
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" />
+
+                <!-- Product Name -->
+                <h4>{{ product.name }}</h4>
+
+                <!-- Price -->
+                <p class="price">Rs.{{ product.price }}</p>
+
+                <!-- Rating -->
+                <div class="rating">
+                    {% for i in "12345" %}
+                    {% if product.rating|default:0 >= i|add:"0" %}
+                    <span class="star full">★</span>
+                    {% else %}
+                    <span class="star">☆</span>
+                    {% endif %}
+                    {% endfor %}
+                    <span class="review-count">({{ product.reviews|default:"0" }} Ratings)</span>
+                </div>
+            </div>
+            {% empty %}
+            <p>No products available.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+
+
+    <!-- About Us Section -->
+    <section id="about" class="about-section">
+        <h2>About Us</h2>
+        <div class="about-container">
+            <div class="about-image">
+                <img src="static/images/cover.jpeg" alt="Modern Living Room" />
+            </div>
+            <div class="about-content">
+                <h3>Affordable furniture for every home</h3>
+                <p>
+                    FurniFlex is a modern digital platform built to help you plan, visualize, and customize furniture
+                    that fits your lifestyle and space—without the pressure of online shopping. We’re not an e-commerce
+                    site. Instead, we focus entirely on empowering users to explore different furniture styles, sizes,
+                    materials, and color options in a creative and personalized way.
+                </p>
+                <p>
+                    Whether you're a homeowner trying to find the right sofa size for your living room, a student
+                    decorating a dorm, or an interior designer experimenting with ideas, FurniFlex is made for you.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Us -->
+    <section id="contact" class="contact-section">
+        <h2>Contact Us</h2>
+        <div class="contact-wrapper">
+            <div class="contact-info">
+                <div class="info-block">
+                    <img class="responsive-img-small" src="{% static 'images/call.png' %}" alt="Call Icon" />
+                    <div>
+                        <h4>Call To Us</h4>
+                        <p>Available 24/7</p>
+                        <p>Phone: +977 9768467330</p>
+                    </div>
+                </div>
+                <hr />
+                <div class="info-block">
+                    <img class="responsive-img-small" src="{% static 'images/msg.png' %}" alt="Mail Icon" />
+                    <div>
+                        <h4>Write To Us</h4>
+                        <p>Email: customer@gmail.com</p>
+                        <p>Email: furniflex@gmail.com</p>
+                    </div>
+                </div>
+            </div>
+
+            <form class="contact-form" method="POST" action="{% url 'send_contact_email' %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <input type="text" name="name" placeholder="Your Name *" required />
+                    <input type="email" name="email" placeholder="Your Email *" required />
+                    <input type="tel" name="phone" placeholder="Your Phone *" required />
+                </div>
+                <textarea name="message" placeholder="Your Message" rows="5" required></textarea>
+                <button type="submit">Send Message</button>
+            </form>
+
+        </div>
+    </section>
+    {% if messages %}
+    <div class="messages" style="display: none;">
+        {% for message in messages %}
+        <p class="message {{ message.tags }}" data-message="{{ message }}" data-type="{{ message.tags }}">{{ message }}
+        </p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <script>
+        function showPopupMessage(message, type) {
+            const existingPopup = document.querySelector('.message-popup');
+            if (existingPopup) existingPopup.remove();
+
+            const popup = document.createElement('div');
+            popup.className = `message-popup ${type}`;
+            popup.innerHTML = `
+            ${message}
+            <button class="popup-close" onclick="closePopup(this)">&times;</button>
+        `;
+            document.body.appendChild(popup);
+
+            setTimeout(() => popup.classList.add('show'), 100);
+            setTimeout(() => {
+                closePopup(popup.querySelector('.popup-close'));
+            }, 4000);
+        }
+
+        function closePopup(btn) {
+            const popup = btn.parentElement;
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const messages = document.querySelectorAll('.messages .message');
+            messages.forEach(msgEl => {
+                const text = msgEl.dataset.message;
+                const type = msgEl.dataset.type || 'info';
+                showPopupMessage(text, type);
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            // Hamburger menu toggle
+            const hamburger = document.getElementById('hamburger');
+            const navMenu = document.getElementById('nav-menu');
+
+            hamburger.addEventListener('click', function () {
+                navMenu.classList.toggle('show');
+            });
+
+            // Desktop dropdown toggle (existing)
+            const dropdownBtn = document.getElementById('accountDropdownBtn');
+            const dropdownMenu = document.getElementById('accountDropdownMenu');
+
+            if (dropdownBtn && dropdownMenu) {
+                dropdownBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    dropdownMenu.classList.toggle('show');
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!dropdownMenu.contains(e.target) && !dropdownBtn.contains(e.target)) {
+                        dropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+
+            // Mobile dropdown toggle inside hamburger
+            const mobileDropdownBtn = document.getElementById('mobileAccountDropdownBtn');
+            const mobileDropdownMenu = document.getElementById('mobileAccountDropdownMenu');
+
+            if (mobileDropdownBtn && mobileDropdownMenu) {
+                mobileDropdownBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    mobileDropdownMenu.classList.toggle('show');
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!mobileDropdownMenu.contains(e.target) && !mobileDropdownBtn.contains(e.target)) {
+                        mobileDropdownMenu.classList.remove('show');
+                    }
+                });
+            }
+        });
+
+
+        // const darkToggle = document.getElementById('darkToggle');
+
+        // if (localStorage.getItem('darkMode') === 'true') {
+        //     document.body.classList.add('dark-mode');
+        //     darkToggle.checked = true;
+        // }
+
+        // darkToggle.addEventListener('change', function () {
+        //     document.body.classList.toggle('dark-mode');
+        //     localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+        // });
+        const darkToggle = document.getElementById('darkToggle');
+
+        // Load dark mode from localStorage
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.body.classList.remove('light');
+            document.body.classList.add('dark');
+            darkToggle.checked = true;
+        }
+
+        darkToggle.addEventListener('change', function () {
+            if (darkToggle.checked) {
+                document.body.classList.remove('light');
+                document.body.classList.add('dark');
+                localStorage.setItem('darkMode', true);
+            } else {
+                document.body.classList.remove('dark');
+                document.body.classList.add('light');
+                localStorage.setItem('darkMode', false);
+            }
+        });
+
+
+
+    </script>
+
+
+</body>
+{% include 'footer.html' %}
+
+
+
+</html>

@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - FurniFlex</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+<style>
+    .beforecart-container {
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 30px;
+        background-color: #f7f7f7;
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        text-align: center;
+        font-family: 'Poppins', sans-serif;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .beforecart-container h2 {
+        font-size: 26px;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #222;
+    }
+
+    .beforecart-container p {
+        font-size: 16px;
+        color: #555;
+    }
+
+    .beforecart-container a {
+        color: #FAB37D;
+        text-decoration: none;
+        font-weight: 600;
+        margin-left: 4px;
+    }
+
+    .beforecart-container a:hover {
+        text-decoration: underline;
+    }
+
+
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #fff;
+        color: #000;
+        margin: 0;
+        padding: 0;
+    }
+
+    .cart-container {
+        max-width: 1200px;
+        margin: 60px auto;
+        padding: 0 20px;
+    }
+
+    .cart-heading {
+        font-size: 32px;
+        font-weight: 600;
+        margin-bottom: 30px;
+    }
+
+    .cart-summary {
+        font-size: 20px;
+        display: flex;
+        gap: 40px;
+        margin-bottom: 20px;
+    }
+
+    .cart-divider {
+        border-top: 1px solid #e0e0e0;
+        margin: 30px 0;
+    }
+
+    .empty-message {
+        font-size: 20px;
+        font-weight: 400;
+        color: #000;
+    }
+</style>
+
+<body>
+    {% include 'navbar.html' %}
+    <div class="cart-container">
+        <h1 class="cart-heading">Your shopping cart</h1>
+        <div class="cart-summary">
+            <span>0 items</span>
+            <span>Rs 0</span>
+        </div>
+        <div class="cart-divider"></div>
+        <p class="empty-message">You do not have any products on your shopping list.</p>
+    </div>
+
+
+    {% block content %}
+    <div class="beforecart-container">
+        <p>You need to <a href="{% url 'login' %}">log in</a> to view your cart.</p>
+    </div>
+    {% endblock %}
+
+    {% include 'footer.html' %}
+</body>
+
+</html>

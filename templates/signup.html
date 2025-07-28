@@ -1,0 +1,342 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign Up - FurniFlex</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/password-strength.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+    <script defer src="{% static 'js/password-strength.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+
+    <!-- Message Popup Styles -->
+    <style>
+        .message-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+
+        .message-popup.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .message-popup.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message-popup.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1b0b7;
+        }
+
+        .message-popup.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .message-popup.info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .popup-close {
+            background: none;
+            border: none;
+            float: right;
+            font-size: 18px;
+            cursor: pointer;
+            color: inherit;
+            margin-left: 10px;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.875rem;
+            margin-top: 4px;
+            margin-left: 0;
+            display: none;
+            text-align: left;
+            width: 100%;
+        }
+
+        /* Enhanced password input styling */
+        .password-input-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-input-container input {
+            width: 100%;
+            padding-right: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    {% include 'navbar.html' %}
+
+    <div class="signup-container">
+        <div class="form-box">
+            <div class="form-logo">
+                <img src="{% static 'images/logofurni.png' %}" alt="FurniFlex Logo" />
+            </div>
+            <h2>Sign Up</h2>
+            <p class="form-subtitle">Enter your details below</p>
+
+            <!-- Messages -->
+            {% if messages %}
+            <div class="messages" style="display: none;">
+                {% for message in messages %}
+                <p class="message {{ message.tags }}" data-message="{{ message }}" data-type="{{ message.tags }}">{{
+                    message }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST" id="registerForm" novalidate>
+                {% csrf_token %}
+                <input type="text" name="name" placeholder="Full Name" required autocomplete="name" />
+                <span class="error-message" id="error-name"></span>
+
+                <input type="email" name="email" placeholder="Email Address" required autocomplete="email" />
+                <span class="error-message" id="error-email"></span>
+
+                <input type="tel" name="phone" placeholder="Phone Number" required autocomplete="tel"
+                    pattern="[0-9]{10,15}" title="Enter valid phone number" />
+                <span class="error-message" id="error-phone"></span>
+
+                <!-- Enhanced Password Input with Strength Assessment -->
+                <div class="password-input-container">
+                    <input type="password" name="password" id="signup-password" placeholder="Password" required autocomplete="new-password" />
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('signup-password', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <span class="error-message" id="error-password"></span>
+                
+                <!-- Password Strength Display -->
+                <div id="password-strength-display"></div>
+                
+                <!-- Password Requirements -->
+                <div class="password-requirements">
+                    <h6>Password Requirements:</h6>
+                    <ul>
+                        <li id="req-length">At least 8 characters long</li>
+                        <li id="req-uppercase">One uppercase letter (A-Z)</li>
+                        <li id="req-lowercase">One lowercase letter (a-z)</li>
+                        <li id="req-number">One number (0-9)</li>
+                        <li id="req-special">One special character (!@#$%^&*)</li>
+                    </ul>
+                </div>
+
+                <div class="password-input-container">
+                    <input type="password" name="confirm_password" id="confirm-password" placeholder="Confirm Password" required autocomplete="new-password" />
+                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirm-password', this)">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+                <span class="error-message" id="error-confirm"></span>
+
+                <button type="submit" class="btn-submit">Create Account</button>
+            </form>
+
+            <p class="login-link">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <!-- Message Popup Script -->
+    <script>
+        // Password visibility toggle
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId);
+            const icon = button.querySelector('i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        // Enhanced form validation with password strength
+        document.getElementById('registerForm').addEventListener('submit', function (e) {
+            const name = this.querySelector('input[name="name"]');
+            const email = this.querySelector('input[name="email"]');
+            const phone = this.querySelector('input[name="phone"]');
+            const password = this.querySelector('input[name="password"]');
+            const confirm = this.querySelector('input[name="confirm_password"]');
+
+            let isValid = true;
+
+            // Clear previous errors
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+                el.innerText = '';
+            });
+
+            // Name validation
+            if (name.value.trim() === '') {
+                document.getElementById('error-name').innerText = 'Full name is required';
+                document.getElementById('error-name').style.display = 'block';
+                isValid = false;
+            } else if (name.value.trim().length < 2) {
+                document.getElementById('error-name').innerText = 'Name must be at least 2 characters';
+                document.getElementById('error-name').style.display = 'block';
+                isValid = false;
+            }
+
+            // Email validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email.value.trim() === '') {
+                document.getElementById('error-email').innerText = 'Email is required';
+                document.getElementById('error-email').style.display = 'block';
+                isValid = false;
+            } else if (!emailPattern.test(email.value)) {
+                document.getElementById('error-email').innerText = 'Invalid email format';
+                document.getElementById('error-email').style.display = 'block';
+                isValid = false;
+            }
+
+            // Phone validation
+            const phonePattern = /^[0-9]{10,15}$/;
+            if (phone.value.trim() === '') {
+                document.getElementById('error-phone').innerText = 'Phone number is required';
+                document.getElementById('error-phone').style.display = 'block';
+                isValid = false;
+            } else if (!phonePattern.test(phone.value.replace(/\D/g, ''))) {
+                document.getElementById('error-phone').innerText = 'Invalid phone number format';
+                document.getElementById('error-phone').style.display = 'block';
+                isValid = false;
+            }
+
+            // Password validation (enhanced)
+            if (password.value.trim() === '') {
+                document.getElementById('error-password').innerText = 'Password is required';
+                document.getElementById('error-password').style.display = 'block';
+                isValid = false;
+            } else {
+                // Check password strength requirements
+                const passwordValue = password.value;
+                const errors = [];
+                
+                if (passwordValue.length < 8) errors.push('at least 8 characters');
+                if (!/[a-z]/.test(passwordValue)) errors.push('one lowercase letter');
+                if (!/[A-Z]/.test(passwordValue)) errors.push('one uppercase letter');
+                if (!/\d/.test(passwordValue)) errors.push('one number');
+                if (!/[!@#$%^&*(),.?":{}|<>]/.test(passwordValue)) errors.push('one special character');
+                
+                if (errors.length > 0) {
+                    document.getElementById('error-password').innerText = `Password must contain: ${errors.join(', ')}`;
+                    document.getElementById('error-password').style.display = 'block';
+                    isValid = false;
+                }
+            }
+
+            // Confirm Password validation
+            if (confirm.value.trim() === '') {
+                document.getElementById('error-confirm').innerText = 'Please confirm your password';
+                document.getElementById('error-confirm').style.display = 'block';
+                isValid = false;
+            } else if (password.value !== confirm.value) {
+                document.getElementById('error-confirm').innerText = 'Passwords do not match';
+                document.getElementById('error-confirm').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                showPopupMessage("Please fix the errors and try again.", "error");
+            }
+        });
+
+        function showPopupMessage(message, type) {
+            const existingPopup = document.querySelector('.message-popup');
+            if (existingPopup) {
+                existingPopup.remove();
+            }
+
+            const popup = document.createElement('div');
+            popup.className = `message-popup ${type}`;
+            popup.innerHTML = `
+                ${message}
+                <button class="popup-close" onclick="closePopup(this)">&times;</button>
+            `;
+
+            document.body.appendChild(popup);
+
+            setTimeout(() => {
+                popup.classList.add('show');
+            }, 100);
+
+            setTimeout(() => {
+                closePopup(popup.querySelector('.popup-close'));
+            }, 5000);
+        }
+
+        function closePopup(closeBtn) {
+            const popup = closeBtn.parentElement;
+            popup.classList.remove('show');
+            setTimeout(() => {
+                popup.remove();
+            }, 300);
+        }
+
+        // Show messages from Django on load
+        document.addEventListener('DOMContentLoaded', function () {
+            const messages = document.querySelectorAll('.messages .message');
+            messages.forEach(function (messageEl) {
+                const message = messageEl.dataset.message;
+                const type = messageEl.dataset.type;
+                showPopupMessage(message, type);
+            });
+        });
+
+        // Optional URL-based messages
+        (function checkUrlForMessages() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const successMsg = urlParams.get('success');
+            const errorMsg = urlParams.get('error');
+
+            if (successMsg) {
+                showPopupMessage(decodeURIComponent(successMsg), 'success');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+
+            if (errorMsg) {
+                showPopupMessage(decodeURIComponent(errorMsg), 'error');
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        })();
+    </script>
+</body>
+
+</html>

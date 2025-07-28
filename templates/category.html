@@ -1,0 +1,134 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FurniFlex</title>
+    <link rel="stylesheet" href="{% static 'css/home.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <!-- <script defer src="static/script.js"></script> -->
+</head>
+
+<body>
+
+    {% include 'navbar.html' %}
+
+    <!-- Sofa Promotion Section -->
+    <section class="promo-section">
+        <h2 class="promo-title">Sofa</h2>
+        <div class="promo-image">
+            <img src="{% static 'images/cover.jpeg' %}" alt="Sofa Promotion Image" />
+        </div>
+        <div class="promo-banner">
+            <p>From May 21 to July 6, 2025 On SOFAS, we give you back 20%</p>
+        </div>
+    </section>
+
+
+    <!-- Products Section -->
+
+    <hr class="section-divider" />
+
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-card" onclick="window.location.href='/customize/{{ product.id }}/'">
+            <!-- Product Image -->
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" />
+
+            <!-- Product Name -->
+            <h4>{{ product.name }}</h4>
+
+            <!-- Price -->
+            <p class="price">Rs.{{ product.price }}</p>
+
+            <!-- Rating -->
+            <div class="rating">
+                {% for i in "12345" %}
+                {% if product.rating|default:0 >= i|add:"0" %}
+                <span class="star full">★</span>
+                {% else %}
+                <span class="star">☆</span>
+                {% endif %}
+                {% endfor %}
+                <span class="review-count">({{ product.reviews|default:"0" }} Reviews)</span>
+            </div>
+        </div>
+        {% empty %}
+        <p>No products available.</p>
+        {% endfor %}
+    </div>
+    </section>
+    <!-- About Us Section -->
+    <section id="about" class="about-section">
+        <h2>About Us</h2>
+        <div class="about-container">
+            <div class="about-image">
+                <img class="responsive-img" src="{% static 'images/cover.jpeg' %}" alt="Modern Living Room" />
+            </div>
+            <div class="about-content">
+                <h3>Affordable furniture for every home</h3>
+                <p>
+                    FurniFlex is a modern digital platform built to help you plan, visualize, and customize furniture
+                    that fits your lifestyle and space—without the pressure of online shopping. We’re not an e-commerce
+                    site. Instead, we focus entirely on empowering users to explore different furniture styles, sizes,
+                    materials, and color options in a creative and personalized way.
+                </p>
+                <p>
+                    Whether you're a homeowner trying to find the right sofa size for your living room, a student
+                    decorating a dorm, or an interior designer experimenting with ideas, FurniFlex is made for you.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Us Section -->
+    <section id="contact" class="contact-section">
+        <h2>Contact Us</h2>
+        <div class="contact-wrapper">
+            <!-- Contact Info Box -->
+            <div class="contact-info">
+                <div class="info-block">
+                    <img class="responsive-img-small" src="{% static 'images/call.png' %}" alt="Call Icon" />
+                    <div>
+                        <h4>Call To Us</h4>
+                        <p>We are available 24/7, 7 days a week.</p>
+                        <p>Phone: +977 9768467330</p>
+                    </div>
+                </div>
+                <hr />
+                <div class="info-block">
+                    <img class="responsive-img-small" src="{% static 'images/msg.png' %}" alt="Mail Icon" />
+                    <div>
+                        <h4>Write To Us</h4>
+                        <p>Fill out our form and we will contact you within 24 hours.</p>
+                        <p>Emails: customer@gmail.com</p>
+                        <p>Emails: furniflex@gmail.com</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <form class="contact-form">
+                <div class="form-row">
+                    <input type="text" placeholder="Your Name *" required />
+                    <input type="email" placeholder="Your Email *" required />
+                    <input type="tel" placeholder="Your Phone *" required />
+                </div>
+                <textarea placeholder="Your Message" rows="5" required></textarea>
+                <button type="submit">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+
+</body>
+{% include 'footer.html' %}
+
+
+
+</html>

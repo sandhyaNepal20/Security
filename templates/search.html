@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Search Results - FurniFlex</title>
+    <link rel="stylesheet" href="{% static 'css/searchproduct.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+
+    <style>
+        .recently-viewed-section {
+            padding: 40px 60px;
+        }
+
+        .recently-viewed-section h2 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 30px;
+        }
+
+        .recent-items-wrapper {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+
+        .recent-item-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 16px;
+            background-color: #fff;
+            border-radius: 8px;
+            width: 280px;
+            min-height: 480px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .recent-item-card img {
+            width: 280px;
+            height: 180px;
+            object-fit: contain;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+
+        .recent-item-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 12px 0 5px;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #777;
+        }
+
+        .stars {
+            color: #FFD700;
+            margin-right: 5px;
+        }
+
+        .recent-item-card .price {
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .description {
+            color: #555;
+            font-size: 14px;
+            margin-top: 6px;
+            flex-grow: 1;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: -10px;
+        }
+
+        .button-group button {
+            border: none;
+            background-color: #e4b07b;
+            padding: 10px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .button-group button:hover {
+            background-color: #d19a62;
+        }
+
+        .button-group button img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <section class="recently-viewed-section">
+        <h2>Search Results{% if search_query %} for "{{ search_query }}"{% endif %}</h2>
+        <div class="recent-items-wrapper">
+            {% for product in products %}
+            <div class="recent-item-card">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                <h3>{{ product.name }}</h3>
+
+                <div class="rating">
+                    <span class="stars">
+                        {% for i in "12345" %}
+                        {% if product.rating|default:0 >= i|add:"0" %}
+                        ★
+                        {% else %}
+                        ☆
+                        {% endif %}
+                        {% endfor %}
+                    </span>
+                    <span>({{ product.reviews|default:"0" }} Reviews)</span>
+                </div>
+
+                <p class="price">Rs {{ product.price }}</p>
+                <p class="description">{{ product.description|truncatechars:100 }}</p>
+
+                <div class="button-group">
+                    <a href="{% url 'customize' product.id %}" title="Customize">
+                        <button><img src="{% static 'images/edit.png' %}" alt="Customize" /></button>
+                    </a>
+                    <a href="{% url 'cart' %}" title="Go to Cart">
+                        <button><img src="{% static 'images/cartt.png' %}" alt="Cart" /></button>
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <p style="text-align:center; font-size: 18px; color: #888;">
+                No products found{% if search_query %} for "{{ search_query }}"{% endif %}.
+            </p>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% include 'footer.html' %}
+</body>
+
+</html>

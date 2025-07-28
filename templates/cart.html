@@ -1,0 +1,160 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FurniFlex</title>
+    <link rel="stylesheet" href="{% static 'css/cart.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <!-- 🛒 Cart Section -->
+    <section class="cart-container">
+        <h2>Shopping Cart</h2>
+        <div class="cart-header">
+            <span>Product</span>
+            <span>Quantity</span>
+            <span>Price</span>
+            <span><img src="{% static 'images/delete.png' %}" alt="Delete All" class="delete-all-icon"
+                    onclick="clearCart()" style="cursor:pointer;"></span>
+        </div>
+        <div id="cart-items-container"></div>
+    </section>
+
+    <hr class="section-divider" />
+
+    <!-- Custom Delete Confirmation Popup -->
+    <div id="delete-confirm-popup" class="confirm-popup hidden">
+        <div class="popup-content">
+            <p>Are you sure you want to delete all the products in the cart?</p>
+            <div class="popup-actions">
+                <button id="confirm-yes">Yes</button>
+                <button id="confirm-no">No</button>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <!-- 📜 Cart Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Handle Add to Cart
+            const buttons = document.querySelectorAll('.add-to-cart-btn');
+            buttons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const id = button.dataset.id;
+                    const name = button.dataset.name;
+                    const price = parseFloat(button.dataset.price);
+                    const image = button.dataset.img;
+
+                    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+                    const existing = cart.find(item => item.id === id);
+                    if (existing) {
+                        existing.quantity += 1;
+                    } else {
+                        cart.push({ id, name, price, image, quantity: 1 });
+                    }
+
+                    localStorage.setItem('cart', JSON.stringify(cart));
+                    alert(`${name} added to cart.`);
+                    renderCart(); // re-render if on cart page
+                });
+            });
+
+            renderCart(); // render once on page load
+
+            // 🧠 Render Cart Items Function
+            function renderCart() {
+                const container = document.getElementById('cart-items-container');
+                if (!container) return;
+
+                const cart = JSON.parse(localStorage.getItem('cart')) || [];
+                container.innerHTML = '';
+
+                if (cart.length === 0) {
+                    container.innerHTML = '<p>Your cart is empty.</p>';
+                    return;
+                }
+
+                cart.forEach((item, index) => {
+                    container.innerHTML += `
+                    <div class="cart-item" data-id="${item.id}">
+                        <div class="product-info">
+                            <img src="${item.image}" alt="${item.name}">
+                            <div><h4>${item.name}</h4></div>
+                        </div>
+                        <div class="quantity">
+                            <input type="number" value="${item.quantity}" min="1" class="qty-input" data-index="${index}" />
+                        </div>
+                        <div class="price" id="price-${item.id}">Rs ${item.price * item.quantity}</div>
+                        <div class="remove-icon">
+<button onclick="removeFromCart('${item.id}')" class="delete-btn">
+    <img src="{% static 'images/delete.png' %}" alt="Delete" />
+</button>
+                        </div>
+                    </div>
+                `;
+                });
+
+                setupQuantityListeners();
+            }
+
+            // 🧠 Quantity Input Handlers
+            function setupQuantityListeners() {
+                const qtyInputs = document.querySelectorAll('.qty-input');
+                qtyInputs.forEach(input => {
+                    input.addEventListener('change', (e) => {
+                        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                        const index = parseInt(input.dataset.index);
+                        const newQty = parseInt(input.value);
+                        if (newQty >= 1) {
+                            cart[index].quantity = newQty;
+                            localStorage.setItem('cart', JSON.stringify(cart));
+                            document.getElementById(`price-${cart[index].id}`).textContent = 'Rs ' + (cart[index].price * newQty);
+                        }
+                    });
+                });
+            }
+
+            // Remove Item
+            window.removeFromCart = function (id) {
+                let cart = JSON.parse(localStorage.getItem('cart')) || [];
+                cart = cart.filter(item => item.id !== id);
+                localStorage.setItem('cart', JSON.stringify(cart));
+                renderCart();
+            }
+
+            window.clearCart = function () {
+                const popup = document.getElementById('delete-confirm-popup');
+                popup.classList.remove('hidden');
+
+                const yesBtn = document.getElementById('confirm-yes');
+                const noBtn = document.getElementById('confirm-no');
+
+                yesBtn.onclick = () => {
+                    localStorage.removeItem('cart');
+                    renderCart();
+                    popup.classList.add('hidden');
+                };
+
+                noBtn.onclick = () => {
+                    popup.classList.add('hidden');
+                };
+            };
+
+        });
+
+
+    </script>
+
+</body>
+
+</html>

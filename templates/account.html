@@ -1,0 +1,86 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FurniFlex - Profile</title>
+    <link rel="stylesheet" href="{% static 'css/account.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <!-- Account Section -->
+    <section class="account-page">
+        <!-- Banner -->
+        <div class="banner-bg"></div>
+
+        <div class="profile-centered">
+            <form method="POST" action="{% url 'upload_profile_picture' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="profile-image-container">
+                    <!-- Show uploaded image only if it's NOT the default one -->
+                    <img src="{% if user.is_authenticated and user.userprofile.profile_image and user.userprofile.profile_image.name != 'profile_images/default.jpg' %}
+                        {{ user.userprofile.profile_image.url }}
+                     {% else %}
+                        {% static 'images/profile.png' %}
+                     {% endif %}" alt="Profile" class="profile-img" id="preview-img" />
+
+                    <!-- Hidden file input -->
+                    <input type="file" name="profile_image" id="profile-image-input" accept="image/*"
+                        style="display: none;" onchange="this.form.submit()" />
+
+                    <!-- Camera icon only for logged in users -->
+                    {% if user.is_authenticated %}
+                    <div class="camera-icon" onclick="document.getElementById('profile-image-input').click();">
+                        <img src="{% static 'images/profileicon.png' %}" alt="Camera Icon" />
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+
+
+        </div>
+
+        <div class="profile-text">
+            <h2>{{ name }}</h2>
+            <p>{{ email }}</p>
+        </div>
+        </div>
+        </form>
+
+        <!-- Edit Info -->
+        <div class="form-wrapper">
+            <a href="{% url 'editprofile' %}" class="edit-button">Edit</a>
+
+            <div class="form-details">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" value="{{ name }}" readonly />
+                </div>
+
+                <div class="form-group">
+                    <label>Email</label>
+                    <p class="plain-email">{{ email }}</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" value="{{ phone }}" readonly />
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    {% include 'footer.html' %}
+</body>
+
+</html>

@@ -1,0 +1,196 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - FurniFlex</title>
+    <link rel="stylesheet" href="{% static 'css/login.css' %}" />
+    <script defer src="{% static 'script.js' %}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+
+    <style>
+        .message-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+
+        .message-popup.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .message-popup.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message-popup.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1b0b7;
+        }
+
+        .popup-close {
+            background: none;
+            border: none;
+            float: right;
+            font-size: 18px;
+            cursor: pointer;
+            color: inherit;
+            margin-left: 10px;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 0.875rem;
+            margin-top: 4px;
+            margin-left: 0;
+            text-align: left;
+            width: 100%;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="signup-container">
+        <div class="form-box">
+            <div class="form-logo">
+                <img src="{% static 'images/logofurni.png' %}" alt="FurniFlex Logo" />
+            </div>
+            <h2>Login</h2>
+
+            <!-- Hidden messages container -->
+            {% if messages %}
+            <div class="messages" style="display: none;">
+                {% for message in messages %}
+                <p class="message {{ message.tags }}" data-message="{{ message }}" data-type="{{ message.tags }}">
+                    {{ message }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <p class="form-subtitle">Welcome back! Please login to your account.</p>
+
+            <form method="POST" id="loginForm" novalidate>
+                {% csrf_token %}
+                <input type="email" placeholder="Email" name="email" required />
+                <span class="error-message" id="error-email"></span>
+
+                <input type="password" placeholder="Password" name="password" required />
+                <span class="error-message" id="error-password"></span>
+
+                <div class="form-actions">
+                    <button type="submit">Log In</button>
+                    <a href="{% url 'password_reset' %}" class="forgot-password">Forgot Password?</a>
+                </div>
+            </form>
+
+            <p class="login-link">Don't have an account? <a href="{% url 'signup' %}">Sign Up</a></p>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+    <!-- Popup JS -->
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            const email = this.querySelector('input[name="email"]');
+            const password = this.querySelector('input[name="password"]');
+
+            let isValid = true;
+
+            // Reset all error messages
+            document.querySelectorAll('.error-message').forEach(el => el.style.display = 'none');
+
+            // Email Validation
+            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email.value.trim() === '') {
+                document.getElementById('error-email').innerText = 'Email is required';
+                document.getElementById('error-email').style.display = 'block';
+                isValid = false;
+            } else if (!emailPattern.test(email.value)) {
+                document.getElementById('error-email').innerText = 'Invalid email format';
+                document.getElementById('error-email').style.display = 'block';
+                isValid = false;
+            }
+
+            // Password Validation
+            if (password.value.trim() === '') {
+                document.getElementById('error-password').innerText = 'Password is required';
+                document.getElementById('error-password').style.display = 'block';
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                showPopupMessage("Please fix the errors and try again.", "error");
+            }
+        });
+        function showPopupMessage(message, type, callback = null) {
+            const existingPopup = document.querySelector('.message-popup');
+            if (existingPopup) existingPopup.remove();
+
+            const popup = document.createElement('div');
+            popup.className = `message-popup ${type}`;
+            popup.innerHTML = `
+            ${message}
+            <button class="popup-close" onclick="closePopup(this)">&times;</button>
+        `;
+
+            document.body.appendChild(popup);
+            setTimeout(() => popup.classList.add('show'), 100);
+
+            setTimeout(() => {
+                closePopup(popup.querySelector('.popup-close'));
+                if (callback) callback();
+            }, 2500);
+        }
+
+        function closePopup(closeBtn) {
+            const popup = closeBtn.parentElement;
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const messages = document.querySelectorAll('.messages .message');
+            const shouldRedirect = "{{ redirect_after_login|default_if_none:False|yesno:'true,false' }}";
+
+            messages.forEach(function (messageEl) {
+                const message = messageEl.dataset.message;
+                const type = messageEl.dataset.type;
+
+                if (shouldRedirect === "true" && type === "success") {
+                    showPopupMessage(message, type, function () {
+                        window.location.href = "{% url 'home' %}";
+                    });
+                } else {
+                    showPopupMessage(message, type);
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Reset Password</title>
+    <link rel="stylesheet" href="{% static 'css/Signup.css' %}">
+</head>
+
+<body>
+    <div class="signup-container">
+        <div class="form-box">
+            <div class="form-logo">
+                <img src="{% static 'images/logofurni.png' %}" />
+                <h2>FurniFlex</h2>
+            </div>
+            <p class="form-subtitle">We have sent a password reset otp to your email</p>
+
+            {% if error %}
+            <p style="color: red;">{{ error }}</p>
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="text" name="otp" placeholder="Enter Code" required />
+                <button type="submit">submit</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,899 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Place Order - FurniFlex</title>
+
+    <link rel="stylesheet" href="{% static 'css/placeorder.css' %}" />
+    <!-- <link rel="stylesheet" href="{% static 'css/customize.css' %}" /> -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/x-icon">
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        .message-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            transform: translateX(400px);
+            opacity: 0;
+            transition: all 0.3s ease-in-out;
+            max-width: 300px;
+            word-wrap: break-word;
+        }
+
+        .message-popup.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .message-popup.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message-popup.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f1b0b7;
+        }
+
+        .popup-close {
+            background: none;
+            border: none;
+            float: right;
+            font-size: 18px;
+            cursor: pointer;
+            color: inherit;
+            margin-left: 10px;
+            padding: 0;
+            line-height: 1;
+        }
+    </style>
+
+
+    <!-- Khalti Checkout JS -->
+</head>
+
+<body>
+
+    {% include 'navbar.html' %}
+
+    <section class="placeorder-container">
+        <div class="main-image-container">
+            <button class="main-nav-arrow main-arrow-left" disabled>&#8592;</button>
+            <div class="main-image">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" id="mainProductImage">
+            </div>
+            <button class="main-nav-arrow main-arrow-right" disabled>&#8594;</button>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="order-right">
+            <div class="cart-summary">
+                <div class="order-top">
+                    <button class="address-btn" onclick="openAddressModal()">Add Address +</button>
+                </div>
+
+                <!-- Address Modal -->
+                <div id="addressModal" class="modal">
+                    <div class="modal-content">
+                        <h3>Add Delivery Address</h3>
+
+                        <label>Full Name</label>
+                        <input type="text" id="fullName" placeholder="Enter your full name" required>
+
+                        <label>Phone Number</label>
+                        <input type="text" id="phoneNumber" placeholder="Enter your phone number" required>
+
+                        <label>City</label>
+                        <input type="text" id="city" placeholder="Enter your city" required>
+
+                        <label>Full Address</label>
+                        <textarea id="address" placeholder="Enter full address" required></textarea>
+
+                        <div class="modal-buttons">
+                            <button onclick="saveAddress()">Save</button>
+                            <button onclick="closeAddressModal()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Display Saved Address -->
+                <div class="saved-address" id="savedAddress" style="display: none;">
+                    <h4>Delivery Address</h4>
+                    <p id="displayFullName"></p>
+                    <p id="displayPhone"></p>
+                    <p id="displayCity"></p>
+                    <p id="displayAddress"></p>
+                </div>
+
+                <div class="order-info">
+                    <div class="info-row">
+                        <label class="label">Quantity</label>
+                        <select class="quantity-select" disabled>
+                            <option>{{ quantity }}</option>
+                        </select>
+                    </div>
+                    <div class="info-row">
+                        <label class="label">Price</label>
+                        <p style="font-size: 15px;">Rs.{{ product.price }}</p>
+                    </div>
+                </div>
+
+                <h3>Cart Total</h3>
+                <div class="summary-row">
+                    <span>Subtotal:</span>
+                    <span>Rs {{ product.price }}</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping:</span>
+                    <span>Free</span>
+                </div>
+                <hr />
+                <div class="summary-row total">
+                    <span>Total:</span>
+                    <span>Rs {{ total_price }}</span>
+                </div>
+
+                <!-- Place order button triggers payment modal -->
+                <button class="place-order-btn">Place order</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Go Back Button -->
+    <div class="go-back-container">
+        <button onclick="history.back()" class="go-back-btn">&larr; Go back</button>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="payment-modal" style="display:none;">
+        <div class="payment-content">
+            <div class="location-row">
+                <img src="{% static 'images/location.png' %}" alt="Location" />
+                <span id="payment-address">[No address selected]</span>
+            </div>
+
+            <div class="amount-row">
+                <strong>Total Amount</strong>
+                <span class="amount">Rs {{ total_price }}</span>
+            </div>
+
+            <hr />
+
+            <h3>Credit & Debit Cards</h3>
+
+            <label class="card-item">
+                <div class="card-left">
+                    <img src="{% static 'images/mastercard.png' %}" alt="Mastercard" />
+                    <span>Axis Bank <b>**** **** **** 8395</b></span>
+                </div>
+                <input type="radio" name="card" />
+                <span class="custom-radio"></span>
+            </label>
+
+            <label class="card-item">
+                <div class="card-left">
+                    <img src="{% static 'images/visa.png' %}" alt="Visa" />
+                    <span>HDFC Bank <b>**** **** **** 6246</b></span>
+                </div>
+                <input type="radio" name="card" />
+                <span class="custom-radio"></span>
+            </label>
+
+            <div class="add-card">
+                <span class="plus-box">+</span>
+                <span>Add New Card</span>
+            </div>
+
+            <h3>More Payment Options</h3>
+
+            <div class="payment-options-box">
+                <div class="option" id="khalti-option">
+                    <img src="{% static 'images/khalti.png' %}" alt="Khalti Wallet" />
+                    <span>Khalti</span>
+                    <span class="arrow">&#x276F;</span>
+                </div>
+                <div class="option" id="stripe-option">
+                    <img src="https://stripe.com/img/v3/home/twitter.png" alt="Stripe"
+                        style="width: 40px; height: 40px;" />
+                    <span>Stripe (Card)</span>
+                    <span class="arrow">&#x276F;</span>
+                </div>
+                <div class="option" id="cod-option">
+                    <img src="{% static 'images/cash.png' %}" alt="Cash" />
+                    <span>Cash on Delivery</span>
+                    <span class="arrow">&#x276F;</span>
+                </div>
+            </div>
+
+            <!-- Stripe payment form (hidden, triggered by clicking Stripe option) -->
+            <div id="stripe-payment-form"
+                style="display:none; margin-top: 20px; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px; background: #f9f9f9;">
+                <h4 style="margin-bottom: 15px; color: #333;">Enter Card Details</h4>
+                <div id="card-element"
+                    style="padding: 12px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 15px; background: white; min-height: 40px;">
+                    <!-- Stripe Elements will create form elements here -->
+                </div>
+                <div id="card-errors" role="alert" style="color: #fa755a; margin-bottom: 15px; font-size: 14px;"></div>
+                <button id="stripe-submit-button"
+                    style="background: #635bff; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; transition: background-color 0.2s;">Pay
+                    Rs {{ total_price }} with Stripe</button>
+            </div>
+
+            <!-- Khalti payment button (hidden, triggered by clicking Khalti option) -->
+            <button id="khalti-button" style="display:none;">Pay with Khalti</button>
+        </div>
+    </div>
+
+    <!-- COD Confirmation Modal -->
+    <div id="codModal" class="cod-modal" style="display:none;">
+        <div class="cod-modal-content">
+            <h3>Are you sure you want to confirm your order?</h3>
+            <p class="cod-note">.</p>
+            <div class="cod-buttons">
+                <button onclick="closeCODModal()" class="decline-btn">Decline</button>
+                <button onclick="confirmCOD()" class="confirm-btn">Confirm</button>
+            </div>
+            <span class="cod-close" onclick="closeCODModal()">&times;</span>
+        </div>
+    </div>
+
+    <!-- Order Success Modal -->
+    <div id="successModal" class="cod-modal" style="display:none;">
+        <div class="cod-modal-content">
+            <div
+                style="font-size: 48px; background: #fff2cc; width: 80px; height: 80px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                🎉
+            </div>
+            <h3 style="margin-top: 20px;">Your order has been placed!</h3>
+            <div class="cod-buttons" style="justify-content: center; margin-top: 20px;">
+                <button onclick="closeSuccessModal()" class="confirm-btn">Thanks!</button>
+            </div>
+            <span class="cod-close" onclick="closeSuccessModal()">&times;</span>
+        </div>
+    </div>
+    <!-- Review Modal -->
+    <div id="reviewPopup" class="modal review-modal" style="display: none;">
+        <div class="review-modal-content">
+            <h2>Give us a Rating</h2>
+            <div class="stars" id="starContainer">
+                <span class="star" data-value="1">&#9733;</span>
+                <span class="star" data-value="2">&#9733;</span>
+                <span class="star" data-value="3">&#9733;</span>
+                <span class="star" data-value="4">&#9733;</span>
+                <span class="star" data-value="5">&#9733;</span>
+            </div>
+            <button onclick="submitReview()" class="submit-review-btn">Submit Rating</button>
+            <p id="reviewThanks" class="thank-you-text" style="display: none;">Thank you for your rating!</p>
+        </div>
+    </div>
+
+
+    {% include 'footer.html' %}
+
+    <script>
+        const paymentModal = document.getElementById('paymentModal');
+        const addressModal = document.getElementById('addressModal');
+        const codModal = document.getElementById('codModal');
+        const successModal = document.getElementById('successModal');
+        const reviewPopup = document.getElementById('reviewPopup');
+
+        document.querySelector('.place-order-btn').addEventListener('click', () => {
+            paymentModal.style.display = 'flex';
+        });
+
+        function closePaymentModal() {
+            paymentModal.style.display = 'none';
+        }
+
+        function openAddressModal() {
+            addressModal.style.display = 'flex';
+        }
+
+        function closeAddressModal() {
+            addressModal.style.display = 'none';
+        }
+        function isAddressFilled() {
+            return document.getElementById('displayFullName').textContent &&
+                document.getElementById('displayPhone').textContent &&
+                document.getElementById('displayCity').textContent &&
+                document.getElementById('displayAddress').textContent;
+        }
+        function saveAddress() {
+            const fullName = document.getElementById('fullName').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const city = document.getElementById('city').value;
+            const address = document.getElementById('address').value;
+
+            if (!fullName || !phoneNumber || !city || !address) {
+                showPopupMessage("Please fill all address fields.", "error");
+                return;
+            }
+
+            document.getElementById('displayFullName').textContent = `Name: ${fullName}`;
+            document.getElementById('displayPhone').textContent = `Phone: ${phoneNumber}`;
+            document.getElementById('displayCity').textContent = `City: ${city}`;
+            document.getElementById('displayAddress').textContent = `Address: ${address}`;
+            document.getElementById('payment-address').textContent = `${address}, ${city}`;
+
+            closeAddressModal();
+            document.getElementById('savedAddress').style.display = 'block';
+        }
+
+        function closeCODModal() {
+            codModal.style.display = 'none';
+        }
+
+        function confirmCOD() {
+            if (!isAddressFilled()) {
+                popup("Please fill in your address before placing the order.");
+                return;
+            }
+
+            const city = document.getElementById("displayCity").innerText.replace("City: ", "");
+            const address = document.getElementById("displayAddress").innerText.replace("Address: ", "");
+            const fullAddress = `${address}, ${city}`;
+
+            fetch("/send-cod-email/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({
+                    product_name: "{{ product.name }}",
+                    product_price: "{{ product.price }}",
+                    quantity: "{{ quantity }}",
+                    total: "{{ total_price }}",
+                    address: fullAddress
+                })
+            }).then(res => res.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        codModal.style.display = "none";
+                        paymentModal.style.display = "none";
+                        successModal.style.display = "flex";
+
+                        setTimeout(() => {
+                            successModal.style.display = "none";
+                            showReviewPopup();
+                        }, 2000);
+                    } else {
+                        popup("Failed to send confirmation email.");
+                    }
+                });
+        }
+
+
+        function closeSuccessModal() {
+            successModal.style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function (event) {
+            if (event.target === paymentModal) closePaymentModal();
+            else if (event.target === addressModal) closeAddressModal();
+            else if (event.target === codModal) closeCODModal();
+            else if (event.target === successModal) closeSuccessModal();
+            else if (event.target === document.getElementById('reviewPopup')) {
+                document.getElementById('reviewPopup').style.display = 'none';
+            }
+        };
+
+
+        // COD click opens COD modal
+        document.getElementById('cod-option').addEventListener('click', () => {
+            if (!isAddressFilled()) {
+                showPopupMessage("Please fill in your address before placing the order.", "error");
+                return;
+            }
+            codModal.style.display = 'flex';
+        });
+
+
+
+        function showReviewSection() {
+            document.getElementById('thanksButton').style.display = 'none';
+            document.getElementById('reviewSection').style.display = 'block';
+        }
+
+        // Show review popup after order success
+        function showReviewPopup() {
+            document.getElementById('reviewPopup').style.display = 'flex';
+        }
+
+        // Trigger the popup immediately after success modal
+        function confirmCOD() {
+            codModal.style.display = 'none';
+            paymentModal.style.display = 'none';
+            successModal.style.display = 'flex';
+
+            // Show review popup after 2 seconds
+            setTimeout(() => {
+                successModal.style.display = 'none';
+                showReviewPopup();
+            }, 2000);
+        }
+
+        function showReviewPopup() {
+            document.getElementById('reviewPopup').style.display = 'flex';
+        }
+
+        // Show review modal after successful order
+        function confirmCOD() {
+            codModal.style.display = 'none';
+            paymentModal.style.display = 'none';
+            successModal.style.display = 'flex';
+
+            // Show review popup after delay
+            setTimeout(() => {
+                successModal.style.display = 'none';
+                showReviewPopup();
+            }, 2000);
+        }
+
+        // Star interaction logic
+        const stars = document.querySelectorAll('#starContainer .star');
+        let selectedRating = 0;
+
+        stars.forEach(star => {
+            star.addEventListener('mouseover', () => {
+                highlightStars(parseInt(star.getAttribute('data-value')));
+            });
+            star.addEventListener('mouseout', () => {
+                highlightStars(selectedRating);
+            });
+            star.addEventListener('click', () => {
+                selectedRating = parseInt(star.getAttribute('data-value'));
+                highlightStars(selectedRating);
+            });
+        });
+
+        function highlightStars(rating) {
+            stars.forEach(star => {
+                const val = parseInt(star.getAttribute('data-value'));
+                star.classList.remove('selected');
+                if (val <= rating) {
+                    star.classList.add('selected');
+                }
+            });
+        }
+
+        function submitReview() {
+            if (selectedRating === 0) {
+                alert("Please select a star rating.");
+                return;
+            }
+
+            document.getElementById('reviewThanks').style.display = 'block';
+
+            // Optional: send rating to Django backend
+            /*
+            fetch('/submit-review/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    rating: selectedRating,
+                    product_id: "{{ product.id }}"
+                })
+            }).then(res => res.json())
+            .then(data => {
+                console.log("Review saved");
+            });
+            */
+        }
+        function submitReview() {
+            if (selectedRating === 0) {
+                alert("Please select a star rating.");
+                return;
+            }
+
+            fetch('/submit-review/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    rating: selectedRating,
+                    product_id: "{{ product.id }}"
+                })
+            }).then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('reviewThanks').style.display = 'block';
+                    } else {
+                        alert("Error: " + data.message);
+                    }
+                }).catch(err => {
+                    console.error(err);
+                    alert("Error submitting ratings.");
+                });
+        }
+
+        const khaltiOption = document.getElementById('khalti-option');
+
+        khaltiOption.addEventListener('click', function () {
+            // Replace with your live public key
+            let config = {
+                publicKey: "test_public_key_dc74e0fd57cb46cd93832aee0a507256",  // Test key for development
+                productIdentity: "{{ product.id }}",
+                productName: "{{ product.name }}",
+                productUrl: window.location.href,
+                eventHandler: {
+                    onSuccess(payload) {
+                        console.log('Khalti payment success:', payload);
+
+                        // Check if address is selected
+                        const savedAddress = document.getElementById('savedAddress');
+                        if (!savedAddress || savedAddress.style.display === 'none') {
+                            alert('Please add delivery address first!');
+                            return;
+                        }
+
+                        // Extract address information with better error handling
+                        const fullNameEl = document.getElementById("displayFullName");
+                        const phoneEl = document.getElementById("displayPhone");
+                        const cityEl = document.getElementById("displayCity");
+                        const addressEl = document.getElementById("displayAddress");
+
+                        if (!fullNameEl || !phoneEl || !cityEl || !addressEl) {
+                            alert('Address information is missing. Please add address first!');
+                            return;
+                        }
+
+                        const fullName = fullNameEl.innerText.replace("Name: ", "").trim();
+                        const phone = phoneEl.innerText.replace("Phone: ", "").trim();
+                        const city = cityEl.innerText.replace("City: ", "").trim();
+                        const address = addressEl.innerText.replace("Address: ", "").trim();
+
+                        if (!fullName || !phone || !city || !address) {
+                            alert('Please ensure all address fields are filled!');
+                            return;
+                        }
+
+                        const paymentData = {
+                            token: payload.token,
+                            amount: parseInt("{{ total_price }}") * 100,
+                            product_id: "{{ product.id }}",
+                            full_name: fullName,
+                            phone: phone,
+                            city: city,
+                            address: address
+                        };
+
+                        console.log('Sending payment data:', paymentData);
+
+                        // Send payment token to backend
+                        fetch("/save-payment-details/", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-CSRFToken": getCookie("csrftoken")
+                            },
+                            body: JSON.stringify(paymentData)
+                        })
+                            .then(response => {
+                                console.log('Response status:', response.status);
+                                return response.json();
+                            })
+                            .then(data => {
+                                console.log('Backend response:', data);
+                                if (data.status === 'success') {
+                                    paymentModal.style.display = 'none';
+                                    successModal.style.display = 'flex';
+                                    setTimeout(() => {
+                                        successModal.style.display = 'none';
+                                        showReviewPopup();
+                                    }, 2000);
+                                } else {
+                                    alert("Failed to save payment: " + (data.message || 'Unknown error'));
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Payment save error:', error);
+                                alert("Error saving payment. Please try again.");
+                            });
+                    },
+                    onError(error) {
+                        console.log(error);
+                        alert("Payment failed!");
+                    },
+                    onClose() {
+                        console.log("Khalti widget is closing");
+                    }
+                }
+            };
+
+            let amount = parseInt("{{ total_price }}") * 100;
+
+            let checkout = new KhaltiCheckout(config);
+            checkout.show({ amount: amount });
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Stripe Integration
+        const stripe = Stripe('pk_test_51Rp2bKLhHv3emNgTyRwTWMco6Kdl64c3ATYIzViO2EwlzquFWLs82PaFqA64RDo16mNekE9GW1n8C8K5B0WlJW6700gie3G35r');
+        const elements = stripe.elements();
+
+        // Style for Stripe Elements
+        const cardElementOptions = {
+            style: {
+                base: {
+                    fontSize: '16px',
+                    color: '#424770',
+                    '::placeholder': {
+                        color: '#aab7c4',
+                    },
+                },
+                invalid: {
+                    color: '#9e2146',
+                },
+            },
+        };
+
+        const cardElement = elements.create('card', cardElementOptions);
+        let stripePaymentIntentId = null;
+        let cardElementMounted = false;
+
+        // Show Stripe payment form when clicking Stripe option
+        document.getElementById('stripe-option').addEventListener('click', () => {
+            // Check if address is saved
+            const savedAddress = document.getElementById('savedAddress');
+            if (savedAddress.style.display === 'none') {
+                showPopupMessage('Please add a delivery address first.', 'error');
+                return;
+            }
+
+            document.getElementById('stripe-payment-form').style.display = 'block';
+
+            // Mount card element if not already mounted
+            if (!cardElementMounted) {
+                cardElement.mount('#card-element');
+                cardElementMounted = true;
+
+                // Handle real-time validation errors from the card Element
+                cardElement.on('change', ({ error }) => {
+                    const displayError = document.getElementById('card-errors');
+                    if (error) {
+                        displayError.textContent = error.message;
+                    } else {
+                        displayError.textContent = '';
+                    }
+                });
+            }
+        });
+
+        // Handle Stripe payment submission
+        document.getElementById('stripe-submit-button').addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            const submitButton = event.target;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Processing...';
+
+            // Clear any previous errors
+            document.getElementById('card-errors').textContent = '';
+
+            try {
+                // Validate address is saved
+                const fullNameEl = document.getElementById('displayFullName');
+                const phoneEl = document.getElementById('displayPhone');
+                const cityEl = document.getElementById('displayCity');
+                const addressEl = document.getElementById('displayAddress');
+
+                if (!fullNameEl || !phoneEl || !cityEl || !addressEl) {
+                    throw new Error('Please complete the delivery address first.');
+                }
+
+                const fullName = fullNameEl.innerText.replace('Name: ', '').trim();
+                const phone = phoneEl.innerText.replace('Phone: ', '').trim();
+                const city = cityEl.innerText.replace('City: ', '').trim();
+                const address = addressEl.innerText.replace('Address: ', '').trim();
+
+                if (!fullName || !phone || !city || !address) {
+                    throw new Error('Please ensure all address fields are filled.');
+                }
+
+                // Create payment intent on backend
+                const totalAmount = Math.round(parseFloat('{{ total_price }}') * 100); // Convert to cents
+
+                const response = await fetch('/stripe-create-payment-intent/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify({
+                        amount: totalAmount,
+                        currency: 'usd',
+                        product_id: '{{ product.id }}',
+                        quantity: '{{ quantity }}',
+                        customer_details: {
+                            name: fullName,
+                            phone: phone,
+                            city: city,
+                            address: address
+                        }
+                    })
+                });
+
+                const paymentData = await response.json();
+
+                if (paymentData.error) {
+                    throw new Error(paymentData.error);
+                }
+
+                stripePaymentIntentId = paymentData.payment_intent_id;
+
+                // Confirm payment with card element
+                const { error, paymentIntent } = await stripe.confirmCardPayment(
+                    paymentData.client_secret,
+                    {
+                        payment_method: {
+                            card: cardElement,
+                            billing_details: {
+                                name: fullName,
+                                phone: phone,
+                                address: {
+                                    city: city,
+                                    line1: address
+                                }
+                            }
+                        }
+                    }
+                );
+
+                if (error) {
+                    throw new Error(error.message);
+                }
+
+                if (paymentIntent.status === 'succeeded') {
+                    // Save payment details to backend
+                    const saveResponse = await fetch('/save-payment-details/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            payment_method: 'stripe',
+                            payment_intent_id: paymentIntent.id,
+                            amount: totalAmount / 100, // Convert back to dollars
+                            product_id: '{{ product.id }}',
+                            quantity: '{{ quantity }}',
+                            full_name: fullName,
+                            phone: phone,
+                            city: city,
+                            address: address
+                        })
+                    });
+
+                    const saveData = await saveResponse.json();
+
+                    if (saveData.status === 'success') {
+                        console.log('Stripe payment successful and order saved');
+                        showPopupMessage('Payment successful!', 'success', () => {
+                            paymentModal.style.display = 'none';
+                            successModal.style.display = 'flex';
+                            setTimeout(() => {
+                                successModal.style.display = 'none';
+                                showReviewPopup();
+                            }, 2000);
+                        });
+                    } else {
+                        throw new Error(saveData.message || 'Order save failed');
+                    }
+                } else {
+                    throw new Error('Payment was not successful');
+                }
+
+            } catch (error) {
+                console.error('Stripe payment error:', error);
+                document.getElementById('card-errors').textContent = error.message;
+                showPopupMessage('Payment failed: ' + error.message, 'error');
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = `Pay Rs {{ total_price }} with Stripe`;
+            }
+        });
+
+        function confirmCOD() {
+            const city = document.getElementById("displayCity").innerText.replace("City: ", "");
+            const address = document.getElementById("displayAddress").innerText.replace("Address: ", "");
+            const fullAddress = `${address}, ${city}`;
+
+            fetch("/send-cod-email/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCookie("csrftoken")
+                },
+                body: JSON.stringify({
+                    product_name: "{{ product.name }}",
+                    product_price: "{{ product.price }}",
+                    quantity: "{{ quantity }}",
+                    total: "{{ total_price }}",
+                    address: fullAddress
+                })
+            }).then(res => res.json())
+                .then(data => {
+                    if (data.status === "success") {
+                        codModal.style.display = "none";
+                        paymentModal.style.display = "none";
+                        successModal.style.display = "flex";
+
+                        setTimeout(() => {
+                            successModal.style.display = "none";
+                            showReviewPopup();
+                        }, 2000);
+                    } else {
+                        alert("Failed to send confirmation email.");
+                    }
+                });
+        }
+
+
+    </script>
+    <script>
+        function showPopupMessage(message, type, callback = null) {
+            const existingPopup = document.querySelector('.message-popup');
+            if (existingPopup) existingPopup.remove();
+
+            const popup = document.createElement('div');
+            popup.className = `message-popup ${type}`;
+            popup.innerHTML = `
+            ${message}
+            <button class="popup-close" onclick="closePopup(this)">&times;</button>
+        `;
+
+            document.body.appendChild(popup);
+            setTimeout(() => popup.classList.add('show'), 100);
+
+            setTimeout(() => {
+                closePopup(popup.querySelector('.popup-close'));
+                if (callback) callback();
+            }, 2500);
+        }
+
+        function closePopup(closeBtn) {
+            const popup = closeBtn.parentElement;
+            popup.classList.remove('show');
+            setTimeout(() => popup.remove(), 300);
+        }
+    </script>
+
+
+
+</body>
+
+</html>
