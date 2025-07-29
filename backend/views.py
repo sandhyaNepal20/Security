@@ -77,7 +77,11 @@ def login_view(request):
 
         # Check if account is locked
         if SecurityUtils.is_account_locked(user):
-            messages.error(request, "Account is temporarily locked due to multiple failed login attempts. Please try again later.")
+            remaining_minutes = SecurityUtils.get_lockout_remaining_time(user)
+            if remaining_minutes > 0:
+                messages.error(request, f"Account is locked due to multiple failed login attempts. Please try again in {remaining_minutes} minute(s).")
+            else:
+                messages.error(request, "Account is locked due to multiple failed login attempts. Please try again later.")
             return redirect('login')
 
         # Check password expiry
@@ -187,10 +191,28 @@ def password_reset_view(request):
     if request.method == 'POST':
         email = request.POST.get('email')
 
+        # Rate limiting check for password reset attempts
+        client_ip = SecurityUtils.get_client_ip(request)
+        if RateLimiter.is_rate_limited(f"password_reset_{client_ip}", max_requests=3, window_minutes=60):
+            messages.error(request, "Too many password reset attempts. Please try again later.")
+            return redirect('password_reset')
+
+        # Additional rate limiting per email to prevent targeting specific accounts
+        if RateLimiter.is_rate_limited(f"password_reset_email_{email}", max_requests=2, window_minutes=30):
+            messages.error(request, "Too many reset attempts for this email. Please try again later.")
+            return redirect('password_reset')
+
         # Generate OTP
         otp = str(random.randint(100000, 999999))
         request.session['reset_email'] = email
         request.session['reset_otp'] = otp
+
+        # Log password reset attempt
+        SecurityUtils.log_activity(
+            None, 'PASSWORD_RESET_REQUESTED', 
+            f'Password reset requested for email: {email}',
+            request, True
+        )
 
         # Send email
         subject = 'FurniFlex Password Reset OTP'

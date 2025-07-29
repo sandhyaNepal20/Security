@@ -1,0 +1,107 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #fff;
+    color: #000;
+    margin: 0;
+    padding: 0;
+}
+
+.edit-profile-page {
+    max-width: 700px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
+
+.edit-profile-page h2 {
+    font-size: 20px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+label {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="password"] {
+    background-color: #f4f4f4;
+    border: none;
+    border-radius: 6px;
+    padding: 12px;
+    font-size: 14px;
+    color: #666;
+    font-family: 'Poppins', sans-serif;
+}
+
+input:focus {
+    outline: none;
+    border: 1px solid #ddd;
+}
+
+.email-display {
+    font-size: 14px;
+    padding-top: 5px;
+    color: #000;
+}
+
+.save-button {
+    align-self: flex-start;
+    padding: 10px 20px;
+    background-color: #FAB37D;
+    color: #000;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #000;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.save-button:hover {
+    background-color: #d87f35;
+    color: #000;
+    transform: scale(1.1);
+}
+
+.success-popup {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: #4caf50;
+    color: white;
+    padding: 14px 24px;
+    border-radius: 6px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 999;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.4s ease;
+}
+
+.success-popup.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.hidden {
+    display: none;
+}

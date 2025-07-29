@@ -211,6 +211,18 @@ class SecurityUtils:
             return user.security_settings.is_account_locked()
         except UserSecuritySettings.DoesNotExist:
             return False
+    
+    @staticmethod
+    def get_lockout_remaining_time(user):
+        """Get remaining lockout time in minutes"""
+        try:
+            security_settings = user.security_settings
+            if security_settings.account_locked_until and security_settings.account_locked_until > timezone.now():
+                remaining = security_settings.account_locked_until - timezone.now()
+                return int(remaining.total_seconds() / 60) + 1  # Round up to next minute
+            return 0
+        except UserSecuritySettings.DoesNotExist:
+            return 0
 
 class RateLimiter:
     """Rate limiting utilities"""
