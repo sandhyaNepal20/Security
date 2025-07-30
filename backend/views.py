@@ -17,6 +17,7 @@ from .session_security import SessionSecurity
 import random
 import json
 from django.conf import settings
+from .encryption_utils import EncryptionValidator, FieldEncryption
 
 # Import security utilities
 from .security_utils import PasswordValidator, SecurityUtils, RateLimiter
@@ -1208,3 +1209,149 @@ def security_dashboard_view(request):
     }
     
     return render(request, 'security_dashboard.html', context)
+
+@admin_required
+def test_encryption_view(request):
+    """Test encryption functionality - Admin only"""
+    if request.method == 'POST':
+        # Test basic encryption/decryption
+        test_results = EncryptionValidator.test_encryption()
+        
+        # Test model encryption with sample data
+        from .models import UserProfile, ContactMessage, Payment, UserSecuritySettings
+        
+        # Create test instances (don't save to DB)
+        test_profile = UserProfile(phone="1234567890")
+        test_profile._encrypt_fields()
+        
+        test_contact = ContactMessage(
+            name="John Doe",
+            email="john@example.com", 
+            phone="9876543210"
+        )
+        test_contact._encrypt_fields()
+        
+        model_tests = {
+            'UserProfile': EncryptionValidator.validate_model_encryption(test_profile, ['phone']),
+            'ContactMessage': EncryptionValidator.validate_model_encryption(test_contact, ['name', 'email', 'phone'])
+        }
+        
+        context = {
+            'test_results': test_results,
+            'model_tests': model_tests,
+            'encryption_working': all(result.get('success', False) for result in test_results)
+        }
+        
+        return JsonResponse(context)
+    
+    return render(request, 'test_encryption.html')
+
+@admin_required
+def encryption_status_view(request):
+    """View encryption status of existing data - Admin only"""
+    from .models import UserProfile, ContactMessage, Payment, UserSecuritySettings, ActivityLog
+    
+    # Check encryption status of existing records
+    encryption_status = {}
+    
+    # UserProfile encryption status
+    profiles_with_encryption = UserProfile.objects.exclude(_phone_encrypted__isnull=True).exclude(_phone_encrypted='')
+    encryption_status['UserProfile'] = {
+        'total_records': UserProfile.objects.count(),
+        'encrypted_records': profiles_with_encryption.count(),
+        'encryption_percentage': (profiles_with_encryption.count() / max(UserProfile.objects.count(), 1)) * 100
+    }
+    
+    # ContactMessage encryption status
+    contacts_with_encryption = ContactMessage.objects.exclude(_email_encrypted__isnull=True).exclude(_email_encrypted='')
+    encryption_status['ContactMessage'] = {
+        'total_records': ContactMessage.objects.count(),
+        'encrypted_records': contacts_with_encryption.count(),
+        'encryption_percentage': (contacts_with_encryption.count() / max(ContactMessage.objects.count(), 1)) * 100
+    }
+    
+    # Payment encryption status
+    payments_with_encryption = Payment.objects.exclude(_khalti_token_encrypted__isnull=True).exclude(_khalti_token_encrypted='')
+    encryption_status['Payment'] = {
+        'total_records': Payment.objects.count(),
+        'encrypted_records': payments_with_encryption.count(),
+        'encryption_percentage': (payments_with_encryption.count() / max(Payment.objects.count(), 1)) * 100
+    }
+    
+    context = {
+        'encryption_status': encryption_status,
+        'overall_encryption_health': sum(status['encryption_percentage'] for status in encryption_status.values()) / len(encryption_status)
+    }
+    
+    return render(request, 'encryption_status.html', context)
+
+@admin_required  
+def encrypt_existing_data_view(request):
+    """Encrypt existing unencrypted data - Admin only"""
+    if request.method == 'POST':
+        from .models import UserProfile, ContactMessage, Payment, UserSecuritySettings, ActivityLog
+        
+        results = {
+            'encrypted_records': 0,
+            'errors': [],
+            'details': {}
+        }
+        
+        try:
+            # Encrypt UserProfile records
+            profiles_to_encrypt = UserProfile.objects.filter(
+                models.Q(_phone_encrypted__isnull=True) | models.Q(_phone_encrypted=''),
+                phone__isnull=False
+            ).exclude(phone='')
+            
+            profile_count = 0
+            for profile in profiles_to_encrypt:
+                try:
+                    profile.save()  # This will trigger encryption
+                    profile_count += 1
+                except Exception as e:
+                    results['errors'].append(f"UserProfile {profile.id}: {str(e)}")
+            
+            results['details']['UserProfile'] = profile_count
+            results['encrypted_records'] += profile_count
+            
+            # Encrypt ContactMessage records
+            contacts_to_encrypt = ContactMessage.objects.filter(
+                models.Q(_email_encrypted__isnull=True) | models.Q(_email_encrypted=''),
+                email__isnull=False
+            ).exclude(email='')
+            
+            contact_count = 0
+            for contact in contacts_to_encrypt:
+                try:
+                    contact.save()  # This will trigger encryption
+                    contact_count += 1
+                except Exception as e:
+                    results['errors'].append(f"ContactMessage {contact.id}: {str(e)}")
+            
+            results['details']['ContactMessage'] = contact_count
+            results['encrypted_records'] += contact_count
+            
+            # Encrypt Payment records
+            payments_to_encrypt = Payment.objects.filter(
+                models.Q(_khalti_token_encrypted__isnull=True) | models.Q(_khalti_token_encrypted=''),
+                khalti_token__isnull=False
+            ).exclude(khalti_token='')
+            
+            payment_count = 0
+            for payment in payments_to_encrypt:
+                try:
+                    payment.save()  # This will trigger encryption
+                    payment_count += 1
+                except Exception as e:
+                    results['errors'].append(f"Payment {payment.id}: {str(e)}")
+            
+            results['details']['Payment'] = payment_count
+            results['encrypted_records'] += payment_count
+            
+        except Exception as e:
+            results['errors'].append(f"General error: {str(e)}")
+        
+        return JsonResponse(results)
+    
+    return render(request, 'encrypt_existing_data.html')

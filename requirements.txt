@@ -1,28 +1,28 @@
 # Core Django Dependencies
 Django==5.1.7
-Pillow==10.0.0
+Pillow==10.4.0
 
 # Security Dependencies
-cryptography==41.0.7
-bcrypt==4.0.1
+cryptography==42.0.5
+bcrypt==4.2.0
 
 # Email Dependencies
 django-environ==0.11.2
 
 # Payment Dependencies
-stripe==7.8.0
+stripe==10.12.0
 requests==2.31.0
 
 # Additional Security Tools
 django-ratelimit==4.1.0
-django-axes==6.1.1
+django-axes==6.5.1
 
 # Development and Testing
 pytest==7.4.3
 pytest-django==4.7.0
 
 # Image Processing for CAPTCHA
-Pillow==10.0.0
+# Pillow==10.0.0
 
 # Caching (for rate limiting)
 django-redis==5.4.0

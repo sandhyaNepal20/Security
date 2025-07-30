@@ -6,64 +6,47 @@ from .views import logout_view, home_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-        path('', home_view, name='home') , 
-        path('cart/', views.cart_view, name='cart'),
+    path('', home_view, name='home'),
+    path('cart/', views.cart_view, name='cart'),
     path('login/', views.login_view, name='login'),
     path('signup/', views.signup_view, name='signup'),
     path('reset-password/', views.password_reset_view, name='password_reset'),
     path('search/', views.searchproduct_view, name='searchproduct'),
-        path('account/', views.account_view, name='account'),
-            path('edit-profile/', views.edit_profile_view, name='editprofile'),
-                # path('category/', views.category_view, name='category'),
-                    path('customize/<int:product_id>/', views.customize_product_view, name='customize'),
-
-                    path('cart/', views.cart_view, name='cart'),
-                        path('logout/', logout_view, name='logout'),
-                            path('placeorder/', views.placeorder_view, name='placeorder'),
-                                path('wishlist/', views.wishlist_view, name='wishlist'),
-                                    path('beforecart/', views.beforecart_view, name='beforecart'),
-                                        path('reset-code/', views.reset_code_view, name='reset_code'),
-                                        path('set-new-password/', views.set_new_password_view, name='set_new_password'),
-                                            path('save/', views.save_view, name='save'),
-                                                path('add-to-save/', views.add_to_save, name='add_to_save'),
-                                                    # path('contact/', views.contact_view, name='contact'),
-                                                        path('upload-profile-picture/', views.upload_profile_picture, name='upload_profile_picture'),
-                                                            path('send-contact-email/', views.send_contact_email, name='send_contact_email'),
-                                                                path('save-payment/', views.save_payment_details, name='save_payment'),
+    path('account/', views.account_view, name='account'),
+    path('edit-profile/', views.edit_profile_view, name='editprofile'),
+    path('customize/<int:product_id>/', views.customize_product_view, name='customize'),
+    path('logout/', logout_view, name='logout'),
+    path('placeorder/', views.placeorder_view, name='placeorder'),
+    path('wishlist/', views.wishlist_view, name='wishlist'),
+    path('beforecart/', views.beforecart_view, name='beforecart'),
+    path('reset-code/', views.reset_code_view, name='reset_code'),
+    path('set-new-password/', views.set_new_password_view, name='set_new_password'),
+    path('save/', views.save_view, name='save'),
+    path('add-to-save/', views.add_to_save, name='add_to_save'),
+    path('upload-profile-picture/', views.upload_profile_picture, name='upload_profile_picture'),
+    path('send-contact-email/', views.send_contact_email, name='send_contact_email'),
+    path('save-payment/', views.save_payment_details, name='save_payment'),
     path('searchview/', views.search_view, name='search'),
     path('submit-review/', views.submit_review, name='submit_review'),
     path('khalti/initiate/', views.initiate_khalti_payment, name='khalti_initiate'),
-
- path('initiate-khalti/',views. initiate_khalti_payment, name='initiate_khalti'),
+    path('initiate-khalti/', views.initiate_khalti_payment, name='initiate_khalti'),
     path('save-payment-details/', views.save_payment_details, name='save_payment'),
     path('payment-success/', views.payment_success_view, name='payment_success'),
-        path('send-cod-email/', views.send_cod_email, name='send_cod_email'),
-
-    # Stripe payment endpoints
+    path('send-cod-email/', views.send_cod_email, name='send_cod_email'),
     path('stripe-create-payment-intent/', views.stripe_create_payment_intent, name='stripe_create_payment_intent'),
     path('stripe-confirm-payment/', views.stripe_confirm_payment, name='stripe_confirm_payment'),
-
-    # Review submission
-    path('submit-review/', views.submit_review, name='submit_review'),
-    
-    # Search functionality
-    path('searchview/', views.search_view, name='search'),
-    
-    # Password Security API endpoints
     path('check-password-strength/', views.check_password_strength, name='check_password_strength'),
     path('check-password-reuse/', views.check_password_reuse, name='check_password_reuse'),
-    
-    # RBAC Protected Views - Role-Based Access Control Demo
-    path('admin-panel/', views.admin_panel, name='admin_panel'),  # ADMIN only
-    path('staff-dashboard/', views.staff_dashboard, name='staff_dashboard'),  # STAFF + ADMIN
-    path('security-logs/', views.view_security_logs, name='view_security_logs'),  # STAFF + ADMIN
-    path('moderate-content/', views.moderate_content, name='moderate_content'),  # MODERATOR + STAFF + ADMIN
-    path('manage-roles/', views.manage_user_roles, name='manage_user_roles'),  # ADMIN only
-    
-    # Session Management Views - Session Security Demo
-    path('session-info/', views.session_info, name='session_info'),  # Logged in users
-    path('terminate-sessions/', views.terminate_all_sessions, name='terminate_all_sessions'),  # Logged in users
-    path('session-management/', views.session_management_dashboard, name='session_management_dashboard'),  # STAFF + ADMIN
-    path('force-logout/', views.force_user_logout, name='force_user_logout'),  # ADMIN only
-
+    path('admin-panel/', views.admin_panel, name='admin_panel'),  
+    path('staff-dashboard/', views.staff_dashboard, name='staff_dashboard'),  
+    path('security-logs/', views.view_security_logs, name='view_security_logs'),  
+    path('moderate-content/', views.moderate_content, name='moderate_content'),  
+    path('manage-roles/', views.manage_user_roles, name='manage_user_roles'),  
+    path('session-info/', views.session_info, name='session_info'),  
+    path('terminate-sessions/', views.terminate_all_sessions, name='terminate_all_sessions'),  
+    path('session-management/', views.session_management_dashboard, name='session_management_dashboard'),  
+    path('force-logout/', views.force_user_logout, name='force_user_logout'),  
+    path('admin/test-encryption/', views.test_encryption_view, name='test_encryption'),
+    path('admin/encryption-status/', views.encryption_status_view, name='encryption_status'),
+    path('admin/encrypt-existing-data/', views.encrypt_existing_data_view, name='encrypt_existing_data'),
 ]
