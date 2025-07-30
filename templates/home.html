@@ -13,6 +13,114 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
     <!-- <script defer src="static/script.js"></script> -->
 </head>
+<style>
+    .hero-full {
+        position: relative;
+        width: 100%;
+        height: 90vh;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 1;
+    }
+
+    .hero-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(to bottom right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+        z-index: 2;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 3;
+        text-align: center;
+        color: #fff;
+        max-width: 800px;
+        padding: 0 20px;
+        animation: fadeInUp 1s ease-out forwards;
+        opacity: 0;
+    }
+
+    .hero-content h1 {
+        font-size: 4rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        line-height: 1.1;
+    }
+
+    .hero-content h2 {
+        font-size: 2rem;
+        font-weight: 400;
+        margin-bottom: 30px;
+        color: #F7CBA5;
+    }
+
+    .hero-content h2 span {
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .shop-now {
+        background-color: #F7CBA5;
+        color: #111827;
+        padding: 14px 32px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .shop-now:hover {
+        background-color: #fff;
+        color: #8B4513;
+        transform: translateY(-3px);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-content h1 {
+            font-size: 2.5rem;
+        }
+
+        .hero-content h2 {
+            font-size: 1.4rem;
+        }
+
+        .shop-now {
+            padding: 12px 24px;
+            font-size: 1rem;
+        }
+    }
+</style>
 
 
 <body class="light">
@@ -83,26 +191,18 @@
             </div>
         </div>
     </header>
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="slide left">
-            <img src="static/images/cover.jpeg" alt="Living Room" />
-            <div class="hero-text top-left">
-                <span class="word">Make</span>
-                <span class="word">Your</span>
-                <span class="word">Home</span>
-                <span class="word">Feel</span>
-                <span class="word">Like</span>
-                <span class="word">You</span>
-            </div>
-        </div>
-        <div class="slide right">
-            <img src="static/images/cover.jpeg" alt="Living Room" />
+    <section class="hero-full">
+        <div class="hero-overlay"></div>
+        <img src="{% static 'images/coverrr.jpg' %}" alt="Hero Background" class="hero-bg" />
+        <div class="hero-content">
+            <h1>Make Your Home</h1>
+            <h2>Feel Like <span>You</span></h2>
             <a href="{% url 'searchproduct' %}">
-                <button class="shop-btn">Shop Now →</button>
+                <button class="shop-now">Shop Now →</button>
             </a>
         </div>
     </section>
+
 
     <!-- Divider Line -->
     <!-- <hr class="section-divider" /> -->
@@ -153,7 +253,7 @@
         <h2>About Us</h2>
         <div class="about-container">
             <div class="about-image">
-                <img src="static/images/cover.jpeg" alt="Modern Living Room" />
+                <img src="static/images/coverrr.jpg" alt="Modern Living Room" />
             </div>
             <div class="about-content">
                 <h3>Affordable furniture for every home</h3>

@@ -1,5 +1,5 @@
 """
-WSGI config for FurniFlex project.
+WSGI config for MeroAakar project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 

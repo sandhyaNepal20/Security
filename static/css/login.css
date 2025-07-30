@@ -16,9 +16,9 @@
 }
 
 .form-logo img {
-    width: 200px;
+    width: 150px;
     /* or any size you want */
-    height: auto;
+    height: 150px;
     /* maintain aspect ratio */
 }
 

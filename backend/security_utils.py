@@ -129,7 +129,7 @@ class SecurityUtils:
     """General security utilities"""
     
     MAX_LOGIN_ATTEMPTS = 5
-    LOCKOUT_DURATION_MINUTES = 30
+    LOCKOUT_DURATION_MINUTES = 5
     
     @staticmethod
     def get_client_ip(request):

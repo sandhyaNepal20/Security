@@ -52,5 +52,7 @@ urlpatterns = [
     # Password Security API endpoints
     path('check-password-strength/', views.check_password_strength, name='check_password_strength'),
     path('check-password-reuse/', views.check_password_reuse, name='check_password_reuse'),
+    
+
 
 ]

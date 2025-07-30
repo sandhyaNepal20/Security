@@ -107,7 +107,7 @@ def login_view(request):
             except UserSecuritySettings.DoesNotExist:
                 pass
             
-            return render(request, 'login.html', {'redirect_after_login': True})
+            return redirect('home')
         else:
             # Handle failed login
             SecurityUtils.handle_failed_login(user, request)
@@ -215,7 +215,7 @@ def password_reset_view(request):
         )
 
         # Send email
-        subject = 'FurniFlex Password Reset OTP'
+        subject = 'MeroAakar Password Reset OTP'
         message = f'Your OTP for resetting your password is: {otp}'
         from_email = None  # Uses DEFAULT_FROM_EMAIL in settings
         recipient_list = [email]
@@ -462,7 +462,7 @@ def save_view(request):
 #             subject,
 #             full_message,
 #             'your_email@gmail.com',  # From email
-#             ['furniflex@gmail.com'],  # To email (or a list of recipients)
+#             ['meroaakar@gmail.com'],  # To email (or a list of recipients)
 #             fail_silently=False,
 #         )
 
@@ -562,7 +562,7 @@ def save_payment_details(request):
                 # Send email confirmation for Stripe payment
                 try:
                     quantity = data.get('quantity', 1)
-                    subject = 'Your FurniFlex Order is Confirmed - Stripe Payment'
+                    subject = 'Your MeroAakar Order is Confirmed - Stripe Payment'
                     message = f"""
 Hello {full_name},
 
@@ -582,10 +582,10 @@ Shipping Address:
 {phone}
 {address}, {city}
 
-We will process and deliver your order soon. Thank you for shopping with FurniFlex!
+We will process and deliver your order soon. Thank you for shopping with MeroAakar!
 
 Best regards,
-FurniFlex Team
+MeroAakar Team
 """
                     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])
                     print(f"Stripe payment confirmation email sent to {user.email}")
@@ -640,7 +640,7 @@ def send_cod_email(request):
         total = data.get("total")
         address = data.get("address")
 
-        subject = 'Your FurniFlex Order is Confirmed (Cash on Delivery)'
+        subject = 'Your MeroAakar Order is Confirmed (Cash on Delivery)'
         message = f"""
 Hello {full_name},
 
@@ -656,10 +656,10 @@ Total: Rs. {total}
 Shipping Address:
 {address}
 
-We will deliver your order soon. Thank you for shopping with FurniFlex!
+We will deliver your order soon. Thank you for shopping with MeroAakar!
 
 Best,
-FurniFlex Team
+MeroAakar Team
 """
 
         send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
@@ -686,7 +686,7 @@ def initiate_khalti_payment(request):
             "website_url": "http://127.0.0.1:8000/",  # or your actual domain
             "amount": amount,
             "purchase_order_id": order_id,
-            "purchase_order_name": "FurniFlex Order"
+            "purchase_order_name": "MeroAakar Order"
         }
 
         headers = {

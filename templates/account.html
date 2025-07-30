@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>FurniFlex - Profile</title>
+    <title>MeroAakar - Profile</title>
     <link rel="stylesheet" href="{% static 'css/account.css' %}" />
     <script defer src="{% static 'script.js' %}"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
@@ -17,8 +17,6 @@
 
     <!-- Account Section -->
     <section class="account-page">
-        <!-- Banner -->
-        <div class="banner-bg"></div>
 
         <div class="profile-centered">
             <form method="POST" action="{% url 'upload_profile_picture' %}" enctype="multipart/form-data">

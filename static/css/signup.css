@@ -56,9 +56,9 @@ nav a {
 }
 
 .form-logo img {
-    width: 200px;
+    width: 100px;
     /* or any size you want */
-    height: auto;
+    height: 80px;
     /* maintain aspect ratio */
 }
 
@@ -97,7 +97,7 @@ form input:focus {
 
 
 form button {
-    background-color: #e6a36d;
+    background-color: #D2B48C;
     color: #000;
     padding: 10px;
     border: none;
@@ -108,7 +108,7 @@ form button {
 }
 
 form button:hover {
-    background-color: #d88c4e;
+    background-color: #8B4513;
 }
 
 .login-link {
