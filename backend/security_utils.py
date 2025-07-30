@@ -200,6 +200,22 @@ class SecurityUtils:
         )
     
     @staticmethod
+    def reset_failed_attempts(user):
+        """Reset failed login attempts for a user"""
+        try:
+            security_settings = user.security_settings
+            security_settings.failed_login_attempts = 0
+            security_settings.account_locked_until = None
+            security_settings.save()
+        except UserSecuritySettings.DoesNotExist:
+            # Create security settings if they don't exist
+            UserSecuritySettings.objects.create(
+                user=user,
+                failed_login_attempts=0,
+                account_locked_until=None
+            )
+    
+    @staticmethod
     def generate_mfa_secret():
         """Generate MFA secret key"""
         return ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(32))

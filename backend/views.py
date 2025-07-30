@@ -12,18 +12,13 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from .models import UserProfile, Product, Category, UserSecuritySettings, PasswordHistory, UserRole, Payment
 from .security_utils import SecurityUtils, PasswordValidator, RateLimiter
+from .captcha_utils import SimpleBotProtection
 from .role_helpers import admin_required, staff_required, moderator_required, check_permission, get_user_role
 from .session_security import SessionSecurity
+from .encryption_utils import EncryptionValidator, FieldEncryption
 import random
 import json
 from django.conf import settings
-from .encryption_utils import EncryptionValidator, FieldEncryption
-
-# Import security utilities
-from .security_utils import PasswordValidator, SecurityUtils, RateLimiter
-from .models import UserSecuritySettings, UserRole
-from django.utils import timezone
-from django.http import JsonResponse
 
 def home_view(request):
     products = Product.objects.all()[:4]  # Fetch only top 4 for homepage
@@ -52,82 +47,146 @@ def beforecart_view(request):
 def cart_view(request):
     return render(request, 'cart.html')
 def login_view(request):
+    # Always show captcha for enhanced security
+    show_captcha = True
+    challenge_token = SimpleBotProtection.generate_challenge()
+    
+    # Check for account lockout status on page load
+    account_locked_info = None
+    if request.method == 'GET':
+        # Check if there's an email in the session or query params to check lockout status
+        email = request.GET.get('email', '')
+        if email:
+            try:
+                user = User.objects.get(email=email)
+                if SecurityUtils.is_account_locked(user):
+                    remaining_time = SecurityUtils.get_lockout_remaining_time(user)
+                    account_locked_info = {
+                        'email': email,
+                        'remaining_time': remaining_time,
+                        'message': f"🔒 Account for {email} is temporarily locked. Please try again in {remaining_time} minute(s)."
+                    }
+            except User.DoesNotExist:
+                pass
+    
     if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '')
+        
         # Rate limiting check
         client_ip = SecurityUtils.get_client_ip(request)
         if RateLimiter.is_rate_limited(f"login_{client_ip}", max_requests=10, window_minutes=15):
-            messages.error(request, "Too many login attempts. Please try again later.")
+            messages.error(request, "Too many login attempts from this IP address. Please try again later.")
             return redirect('login')
-
-        # Check if user exists
+        
+        # Bot protection verification - always required now
+        challenge_token_post = request.POST.get('challenge_token')
+        robot_check = request.POST.get('robot_check')
+        
+        # Verify captcha is checked and token is valid
+        if not robot_check:
+            messages.error(request, "Please check the 'I am not a robot' box to continue.")
+            SimpleBotProtection.record_login_failure(request)
+            return redirect('login')
+            
+        if not challenge_token_post or not SimpleBotProtection.verify_challenge(challenge_token_post, user_verified=True):
+            messages.error(request, "Captcha verification failed. Please refresh the page and try again.")
+            SimpleBotProtection.record_login_failure(request)
+            return redirect('login')
+        
+        # Validate email and password are provided
+        if not email or not password:
+            messages.error(request, "Please provide both email and password.")
+            return redirect('login')
+        
         try:
-            user = User.objects.get(username=email)
+            user = User.objects.get(email=email)
+            
+            # Check if account is locked BEFORE attempting password check
+            if SecurityUtils.is_account_locked(user):
+                remaining_time = SecurityUtils.get_lockout_remaining_time(user)
+                messages.error(request, f"🔒 Account is temporarily locked due to multiple failed login attempts. Please try again in {remaining_time} minute(s).")
+                # Redirect with email parameter to show lockout status on page reload
+                return redirect(f'/login/?email={email}')
+            
+            # Get current failed attempts count for messaging
+            try:
+                security_settings = user.security_settings
+                current_attempts = security_settings.failed_login_attempts
+            except UserSecuritySettings.DoesNotExist:
+                current_attempts = 0
+            
+            # Check password
+            if user.check_password(password):
+                # Check if password has expired
+                if PasswordValidator.is_password_expired(user):
+                    request.session['force_password_change'] = True
+                    request.session['user_id'] = user.id
+                    messages.warning(request, "Your password has expired. Please change it to continue.")
+                    return redirect('change_password')
+                
+                # Create secure session
+                SessionSecurity.create_secure_session(request, user)
+                
+                # Reset failed login attempts and clear bot protection requirement
+                SecurityUtils.reset_failed_attempts(user)
+                SimpleBotProtection.clear_login_failures(request)
+                
+                # Log successful login
+                SecurityUtils.log_activity(
+                    user, 'LOGIN', 
+                    f'Successful login from {client_ip}',
+                    request, True
+                )
+                
+                login(request, user)
+                messages.success(request, f"Welcome back, {user.first_name}!")
+                return redirect('home')
+            else:
+                # Handle failed login with detailed messaging
+                SecurityUtils.handle_failed_login(user, request)
+                SimpleBotProtection.record_login_failure(request)
+                
+                # Get updated failed attempts count after increment
+                try:
+                    security_settings = user.security_settings
+                    new_attempts = security_settings.failed_login_attempts
+                    remaining_attempts = SecurityUtils.MAX_LOGIN_ATTEMPTS - new_attempts
+                    
+                    if new_attempts >= SecurityUtils.MAX_LOGIN_ATTEMPTS:
+                        # Account just got locked - redirect with email to show lockout status
+                        messages.error(request, f"🔒 Account locked! Too many failed login attempts ({SecurityUtils.MAX_LOGIN_ATTEMPTS}/{SecurityUtils.MAX_LOGIN_ATTEMPTS}). Your account has been temporarily locked for {SecurityUtils.LOCKOUT_DURATION_MINUTES} minutes for security.")
+                        return redirect(f'/login/?email={email}')
+                    elif remaining_attempts <= 2:
+                        # Warning when close to lockout
+                        messages.error(request, f"⚠️ Invalid email or password. Warning: {remaining_attempts} attempt(s) remaining before account lockout.")
+                    else:
+                        # Regular failed login message
+                        messages.error(request, f"❌ Invalid email or password. {remaining_attempts} attempt(s) remaining.")
+                        
+                except UserSecuritySettings.DoesNotExist:
+                    messages.error(request, "❌ Invalid email or password.")
+                
+                return redirect('login')
+                
         except User.DoesNotExist:
-            # Log failed attempt for non-existent user
+            # Log failed login attempt for non-existent user
             SecurityUtils.log_activity(
                 None, 'LOGIN_FAILED', 
-                f'Login attempt for non-existent user: {email}',
+                f'Login attempt for non-existent email: {email}',
                 request, False
             )
-            messages.error(request, "Invalid email or password.")
+            SimpleBotProtection.record_login_failure(request)
+            messages.error(request, "❌ Invalid email or password. Please check your credentials and try again.")
             return redirect('login')
-
-        # Check if account is locked
-        if SecurityUtils.is_account_locked(user):
-            remaining_minutes = SecurityUtils.get_lockout_remaining_time(user)
-            if remaining_minutes > 0:
-                messages.error(request, f"Account is locked due to multiple failed login attempts. Please try again in {remaining_minutes} minute(s).")
-            else:
-                messages.error(request, "Account is locked due to multiple failed login attempts. Please try again later.")
-            return redirect('login')
-
-        # Check password expiry
-        if PasswordValidator.is_password_expired(user):
-            messages.warning(request, "Your password has expired. Please change your password.")
-            request.session['force_password_change'] = user.id
-            return redirect('change_password')
-
-        # Authenticate user
-        authenticated_user = authenticate(request, username=email, password=password)
-
-        if authenticated_user is not None:
-            # Handle successful login
-            SecurityUtils.handle_successful_login(user, request)
-            login(request, authenticated_user)
-            
-            # Create secure session with enhanced security
-            SessionSecurity.create_secure_session(request, authenticated_user)
-            
-            messages.success(request, "Logged in successfully with secure session.")
-            
-            # Check if MFA is enabled
-            try:
-                if user.security_settings.mfa_enabled:
-                    request.session['pending_mfa_user'] = user.id
-                    return redirect('mfa_verify')
-            except UserSecuritySettings.DoesNotExist:
-                pass
-            
-            return redirect('home')
-        else:
-            # Handle failed login
-            SecurityUtils.handle_failed_login(user, request)
-            
-            # Get updated security settings to show remaining attempts
-            security_settings = user.security_settings
-            remaining_attempts = SecurityUtils.MAX_LOGIN_ATTEMPTS - security_settings.failed_login_attempts
-            
-            if remaining_attempts > 0:
-                messages.error(request, f"Invalid email or password. {remaining_attempts} attempts remaining.")
-            else:
-                messages.error(request, "Account has been locked due to multiple failed login attempts.")
-            
-            return redirect('login')
-
-    return render(request, 'login.html')
+    
+    context = {
+        'show_captcha': show_captcha,
+        'challenge_token': challenge_token,
+        'account_locked_info': account_locked_info
+    }
+    
+    return render(request, 'login.html', context)
 def signup_view(request):
     if request.method == 'POST':
         name = request.POST['name']
@@ -1355,3 +1414,29 @@ def encrypt_existing_data_view(request):
         return JsonResponse(results)
     
     return render(request, 'encrypt_existing_data.html')
+
+@csrf_exempt
+def generate_captcha_view(request):
+    """Generate a new CAPTCHA for the login form"""
+    try:
+        captcha_data = CaptchaGenerator.generate_captcha()
+        return JsonResponse({
+            'success': True,
+            'captcha_key': captcha_data['key'],
+            'captcha_image': captcha_data['image_url']
+        })
+    except Exception as e:
+        # Fallback to math CAPTCHA
+        try:
+            math_captcha = SimpleCaptcha.generate_math_captcha()
+            return JsonResponse({
+                'success': True,
+                'captcha_key': math_captcha['key'],
+                'captcha_question': math_captcha['question'],
+                'captcha_type': 'math'
+            })
+        except Exception as e2:
+            return JsonResponse({
+                'success': False,
+                'error': 'Failed to generate CAPTCHA'
+            })

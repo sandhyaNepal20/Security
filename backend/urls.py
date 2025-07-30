@@ -49,4 +49,7 @@ urlpatterns = [
     path('admin/test-encryption/', views.test_encryption_view, name='test_encryption'),
     path('admin/encryption-status/', views.encryption_status_view, name='encryption_status'),
     path('admin/encrypt-existing-data/', views.encrypt_existing_data_view, name='encrypt_existing_data'),
+    
+    # CAPTCHA endpoint
+    path('generate-captcha/', views.generate_captcha_view, name='generate_captcha'),
 ]
