@@ -416,6 +416,98 @@ def manage_user_roles(request):
     }
     return render(request, 'manage_roles.html', context)
 
+# Session Management Views - Demonstrating Session Security Features
+
+@login_required
+def session_info(request):
+    """Display current session information and security status"""
+    session_info = SessionSecurity.get_session_info(request)
+    active_sessions_count = SessionSecurity.get_active_sessions_count(request.user)
+    
+    context = {
+        'session_info': session_info,
+        'active_sessions_count': active_sessions_count,
+        'max_sessions_allowed': SessionSecurity.MAX_SESSIONS_PER_USER,
+        'user_role': get_user_role(request.user)
+    }
+    return render(request, 'session_info.html', context)
+
+@login_required
+def terminate_all_sessions(request):
+    """Terminate all sessions for the current user (except current one)"""
+    if request.method == 'POST':
+        sessions_terminated = SessionSecurity.force_logout_all_sessions(request.user)
+        
+        # Create a new secure session for the current user
+        SessionSecurity.create_secure_session(request, request.user)
+        
+        messages.success(request, f"Successfully terminated {sessions_terminated} session(s). You remain logged in on this device.")
+        
+        # Log this security action
+        SecurityUtils.log_activity(
+            request.user, 'ALL_SESSIONS_TERMINATED_BY_USER',
+            f'User manually terminated all sessions ({sessions_terminated} sessions)',
+            request, True
+        )
+    
+    return redirect('session_info')
+
+@staff_required
+def session_management_dashboard(request):
+    """Staff dashboard for monitoring session security - STAFF and ADMIN only"""
+    if not check_permission(request.user, 'view_logs'):
+        messages.error(request, "You don't have permission to access session management.")
+        return redirect('account')
+    
+    # Get session statistics
+    from django.contrib.sessions.models import Session
+    from django.contrib.auth.models import User
+    
+    total_sessions = Session.objects.count()
+    total_users = User.objects.count()
+    
+    # Get users with multiple sessions
+    users_with_multiple_sessions = []
+    for user in User.objects.all():
+        session_count = SessionSecurity.get_active_sessions_count(user)
+        if session_count > 1:
+            users_with_multiple_sessions.append({
+                'user': user,
+                'session_count': session_count
+            })
+    
+    context = {
+        'total_sessions': total_sessions,
+        'total_users': total_users,
+        'users_with_multiple_sessions': users_with_multiple_sessions,
+        'session_timeout_minutes': SessionSecurity.SESSION_TIMEOUT_MINUTES,
+        'max_sessions_per_user': SessionSecurity.MAX_SESSIONS_PER_USER,
+        'user_role': get_user_role(request.user)
+    }
+    return render(request, 'session_management.html', context)
+
+@admin_required
+def force_user_logout(request):
+    """Admin can force logout all sessions for any user"""
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        try:
+            target_user = User.objects.get(id=user_id)
+            sessions_terminated = SessionSecurity.force_logout_all_sessions(target_user)
+            
+            messages.success(request, f"Successfully terminated {sessions_terminated} session(s) for user {target_user.username}")
+            
+            # Log this admin action
+            SecurityUtils.log_activity(
+                request.user, 'ADMIN_FORCE_LOGOUT',
+                f'Admin {request.user.username} terminated all sessions for user {target_user.username}',
+                request, True
+            )
+        except User.DoesNotExist:
+            messages.error(request, "User not found")
+    
+    return redirect('session_management_dashboard')
+
 @login_required
 def edit_profile_view(request):
     user = request.user

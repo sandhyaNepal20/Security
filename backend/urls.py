@@ -59,5 +59,11 @@ urlpatterns = [
     path('security-logs/', views.view_security_logs, name='view_security_logs'),  # STAFF + ADMIN
     path('moderate-content/', views.moderate_content, name='moderate_content'),  # MODERATOR + STAFF + ADMIN
     path('manage-roles/', views.manage_user_roles, name='manage_user_roles'),  # ADMIN only
+    
+    # Session Management Views - Session Security Demo
+    path('session-info/', views.session_info, name='session_info'),  # Logged in users
+    path('terminate-sessions/', views.terminate_all_sessions, name='terminate_all_sessions'),  # Logged in users
+    path('session-management/', views.session_management_dashboard, name='session_management_dashboard'),  # STAFF + ADMIN
+    path('force-logout/', views.force_user_logout, name='force_user_logout'),  # ADMIN only
 
 ]
