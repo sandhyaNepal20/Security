@@ -103,9 +103,9 @@
     <div class="signup-container">
         <div class="form-box">
             <div class="form-logo">
-                <img src="{% static 'images/logofurni.png' %}" alt="FurniFlex Logo" />
+                <img src="{% static 'images/logo.png' %}" alt="FurniFlex Logo" />
             </div>
-            <h2>Sign Up</h2>
+            <!-- <h2>Sign Up</h2> -->
             <p class="form-subtitle">Enter your details below</p>
 
             <!-- Messages -->
@@ -132,16 +132,18 @@
 
                 <!-- Enhanced Password Input with Strength Assessment -->
                 <div class="password-input-container">
-                    <input type="password" name="password" id="signup-password" placeholder="Password" required autocomplete="new-password" />
-                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('signup-password', this)">
+                    <input type="password" name="password" id="signup-password" placeholder="Password" required
+                        autocomplete="new-password" />
+                    <button type="button" class="password-toggle"
+                        onclick="togglePasswordVisibility('signup-password', this)">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
                 <span class="error-message" id="error-password"></span>
-                
+
                 <!-- Password Strength Display -->
                 <div id="password-strength-display"></div>
-                
+
                 <!-- Password Requirements -->
                 <div class="password-requirements">
                     <h6>Password Requirements:</h6>
@@ -155,8 +157,10 @@
                 </div>
 
                 <div class="password-input-container">
-                    <input type="password" name="confirm_password" id="confirm-password" placeholder="Confirm Password" required autocomplete="new-password" />
-                    <button type="button" class="password-toggle" onclick="togglePasswordVisibility('confirm-password', this)">
+                    <input type="password" name="confirm_password" id="confirm-password" placeholder="Confirm Password"
+                        required autocomplete="new-password" />
+                    <button type="button" class="password-toggle"
+                        onclick="togglePasswordVisibility('confirm-password', this)">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
@@ -177,7 +181,7 @@
         function togglePasswordVisibility(inputId, button) {
             const input = document.getElementById(inputId);
             const icon = button.querySelector('i');
-            
+
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.className = 'fas fa-eye-slash';
@@ -247,13 +251,13 @@
                 // Check password strength requirements
                 const passwordValue = password.value;
                 const errors = [];
-                
+
                 if (passwordValue.length < 8) errors.push('at least 8 characters');
                 if (!/[a-z]/.test(passwordValue)) errors.push('one lowercase letter');
                 if (!/[A-Z]/.test(passwordValue)) errors.push('one uppercase letter');
                 if (!/\d/.test(passwordValue)) errors.push('one number');
                 if (!/[!@#$%^&*(),.?":{}|<>]/.test(passwordValue)) errors.push('one special character');
-                
+
                 if (errors.length > 0) {
                     document.getElementById('error-password').innerText = `Password must contain: ${errors.join(', ')}`;
                     document.getElementById('error-password').style.display = 'block';

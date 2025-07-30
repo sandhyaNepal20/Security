@@ -50,8 +50,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'FurniFlex.urls'
-
+ROOT_URLCONF = 'MeroAakar.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -68,8 +67,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'FurniFlex.wsgi.application'
-
+WSGI_APPLICATION = 'MeroAakar.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
