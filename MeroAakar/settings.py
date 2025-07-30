@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'backend.middleware.SessionSecurityMiddleware',  # Custom session security middleware
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -115,15 +116,56 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    
-]
+
+# ============================================================================
+# SESSION SECURITY CONFIGURATION
+# ============================================================================
+
+# Session Configuration
+SESSION_COOKIE_AGE = 1800  # 30 minutes session timeout
+SESSION_SAVE_EVERY_REQUEST = True  # Update session on every request
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when browser closes
+
+# Secure Session Cookies
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript access to session cookies
+SESSION_COOKIE_SAMESITE = 'Lax'  # CSRF protection
+SESSION_COOKIE_NAME = 'furniflex_sessionid'  # Custom session cookie name
+
+# CSRF Protection
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_HTTPONLY = True  # Prevent JavaScript access to CSRF cookies
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_NAME = 'furniflex_csrftoken'  # Custom CSRF cookie name
+
+# Security Headers
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Session Security Settings
+SESSION_SECURITY = {
+    'SESSION_TIMEOUT_MINUTES': 30,  # Auto logout after 30 minutes of inactivity
+    'ABSOLUTE_SESSION_TIMEOUT_HOURS': 8,  # Force logout after 8 hours
+    'MAX_SESSIONS_PER_USER': 3,  # Maximum concurrent sessions per user
+    'DETECT_IP_CHANGE': True,  # Detect IP address changes (potential hijacking)
+    'DETECT_USER_AGENT_CHANGE': True,  # Detect User-Agent changes
+    'FORCE_LOGOUT_ON_SUSPICIOUS_ACTIVITY': True,  # Auto logout on suspicious activity
+}
+
+# Production Security Settings (uncomment for production)
+# SECURE_SSL_REDIRECT = True  # Force HTTPS
+# SECURE_HSTS_SECONDS = 31536000  # HTTP Strict Transport Security
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+# SESSION_COOKIE_SECURE = True  # Secure session cookies
+# CSRF_COOKIE_SECURE = True  # Secure CSRF cookies
 
 STATIC_ROOT = 'static_files/'
 

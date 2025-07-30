@@ -53,6 +53,11 @@ urlpatterns = [
     path('check-password-strength/', views.check_password_strength, name='check_password_strength'),
     path('check-password-reuse/', views.check_password_reuse, name='check_password_reuse'),
     
-
+    # RBAC Protected Views - Role-Based Access Control Demo
+    path('admin-panel/', views.admin_panel, name='admin_panel'),  # ADMIN only
+    path('staff-dashboard/', views.staff_dashboard, name='staff_dashboard'),  # STAFF + ADMIN
+    path('security-logs/', views.view_security_logs, name='view_security_logs'),  # STAFF + ADMIN
+    path('moderate-content/', views.moderate_content, name='moderate_content'),  # MODERATOR + STAFF + ADMIN
+    path('manage-roles/', views.manage_user_roles, name='manage_user_roles'),  # ADMIN only
 
 ]

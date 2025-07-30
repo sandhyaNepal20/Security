@@ -1,23 +1,22 @@
-from django.shortcuts import get_object_or_404, render,redirect
-from django.contrib import messages
-from django.contrib.auth import authenticate, login
-from .models import Category, Product  # Import Product model
-import json
-from .models import UserProfile  # Add this at the top
-from django.contrib.auth.hashers import make_password
-
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import update_session_auth_hash
-
-from django.contrib.auth.models import User   # <--- Add this line
-from django.shortcuts import render, redirect
-from django.core.mail import send_mail
-import random
-from django.conf import settings
-from .models import Payment  # Make sure you have this model
+from django.contrib.auth.models import User
+from django.contrib import messages
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
-from django.db.models import Q
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth import update_session_auth_hash
+from django.core.mail import send_mail
+from django.utils import timezone
+from .models import UserProfile, Product, Category, UserSecuritySettings, PasswordHistory, UserRole, Payment
+from .security_utils import SecurityUtils, PasswordValidator, RateLimiter
+from .role_helpers import admin_required, staff_required, moderator_required, check_permission, get_user_role
+from .session_security import SessionSecurity
+import random
+import json
+from django.conf import settings
 
 # Import security utilities
 from .security_utils import PasswordValidator, SecurityUtils, RateLimiter
@@ -97,7 +96,11 @@ def login_view(request):
             # Handle successful login
             SecurityUtils.handle_successful_login(user, request)
             login(request, authenticated_user)
-            messages.success(request, "Logged in successfully.")
+            
+            # Create secure session with enhanced security
+            SessionSecurity.create_secure_session(request, authenticated_user)
+            
+            messages.success(request, "Logged in successfully with secure session.")
             
             # Check if MFA is enabled
             try:
@@ -272,6 +275,7 @@ def search_product_view(request):
         except:
             product.color_options = []
     return render(request, 'searchproduct.html', {'products': products, 'categories': categories})
+
 @login_required
 def account_view(request):
     user = request.user
@@ -279,13 +283,139 @@ def account_view(request):
         phone = user.userprofile.phone
     except UserProfile.DoesNotExist:
         phone = "Not Provided"
+    
+    # Get user role information using RBAC helpers
+    user_role = get_user_role(user)
+    
+    # Check permissions for different actions
+    permissions = {
+        'can_manage_products': check_permission(user, 'manage_products'),
+        'can_view_logs': check_permission(user, 'view_logs'),
+        'can_manage_users': check_permission(user, 'manage_users'),
+        'is_admin': user_role == 'ADMIN',
+        'is_staff': user_role in ['ADMIN', 'STAFF'],
+    }
 
     context = {
         'name': user.first_name,
         'email': user.email,
-        'phone': phone
+        'phone': phone,
+        'user_role': user_role,
+        'permissions': permissions,
     }
     return render(request, 'account.html', context)
+
+# RBAC Protected Views - Demonstrating Role-Based Access Control
+
+@admin_required
+def admin_panel(request):
+    """Admin-only panel - Only users with ADMIN role can access"""
+    total_users = User.objects.count()
+    total_products = Product.objects.count()
+    
+    # Get role distribution
+    role_stats = {}
+    for role in ['ADMIN', 'STAFF', 'MODERATOR', 'CUSTOMER']:
+        count = UserRole.objects.filter(role=role).count()
+        role_stats[role] = count
+    
+    context = {
+        'total_users': total_users,
+        'total_products': total_products,
+        'role_stats': role_stats,
+        'user_role': get_user_role(request.user)
+    }
+    return render(request, 'admin_panel.html', context)
+
+@staff_required
+def staff_dashboard(request):
+    """Staff dashboard - Only STAFF and ADMIN roles can access"""
+    if not check_permission(request.user, 'manage_products'):
+        messages.error(request, "You don't have permission to access the staff dashboard.")
+        return redirect('account')
+    
+    products = Product.objects.all()[:10]  # Show first 10 products
+    
+    context = {
+        'products': products,
+        'user_role': get_user_role(request.user),
+        'can_edit': check_permission(request.user, 'edit_products'),
+        'can_delete': check_permission(request.user, 'delete_all')
+    }
+    return render(request, 'staff_dashboard.html', context)
+
+@staff_required
+def view_security_logs(request):
+    """Security logs view - Only STAFF and ADMIN can access"""
+    if not check_permission(request.user, 'view_logs'):
+        messages.error(request, "You don't have permission to view security logs.")
+        return redirect('account')
+    
+    # Log this access
+    SecurityUtils.log_activity(
+        request.user, 'SECURITY_LOGS_ACCESSED',
+        'User accessed security logs',
+        request, True
+    )
+    
+    context = {
+        'user_role': get_user_role(request.user),
+        'message': 'Security logs access granted. Only STAFF and ADMIN roles can view this page.'
+    }
+    return render(request, 'security_logs.html', context)
+
+@moderator_required
+def moderate_content(request):
+    """Content moderation - MODERATOR, STAFF, and ADMIN can access"""
+    if not check_permission(request.user, 'moderate_content'):
+        messages.error(request, "You don't have permission to moderate content.")
+        return redirect('account')
+    
+    context = {
+        'user_role': get_user_role(request.user),
+        'message': 'Content moderation panel. MODERATOR, STAFF, and ADMIN roles can access this.'
+    }
+    return render(request, 'moderate_content.html', context)
+
+@admin_required
+def manage_user_roles(request):
+    """User role management - Only ADMIN can access"""
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        new_role = request.POST.get('role')
+        
+        try:
+            user = User.objects.get(id=user_id)
+            from .role_helpers import assign_role
+            if assign_role(user, new_role):
+                messages.success(request, f"Successfully changed {user.username}'s role to {new_role}")
+                
+                # Log the role change
+                SecurityUtils.log_activity(
+                    request.user, 'ROLE_CHANGE',
+                    f'Changed user {user.username} role to {new_role}',
+                    request, True
+                )
+            else:
+                messages.error(request, "Invalid role specified")
+        except User.DoesNotExist:
+            messages.error(request, "User not found")
+    
+    # Get all users with their roles
+    users = User.objects.all()
+    users_with_roles = []
+    for user in users:
+        users_with_roles.append({
+            'user': user,
+            'role': get_user_role(user)
+        })
+    
+    context = {
+        'users_with_roles': users_with_roles,
+        'available_roles': ['ADMIN', 'STAFF', 'MODERATOR', 'CUSTOMER']
+    }
+    return render(request, 'manage_roles.html', context)
+
 @login_required
 def edit_profile_view(request):
     user = request.user
